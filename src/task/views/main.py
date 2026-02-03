@@ -287,6 +287,8 @@ class TaskAsyncViewSet(ViewSet):
             return []
 
         busy = []
+        # Exclude recurring tasks logic can be added here later if needed
+        # For now, just check overlapping concrete tasks
         qs = Task.objects.filter(
             user_id=user_id,
             started_at__isnull=False,
@@ -357,6 +359,23 @@ class TaskAsyncViewSet(ViewSet):
             task_payload["started_at"] = self._to_aware(task_payload.get("started_at"))
             task_payload["finished_at"] = self._to_aware(task_payload.get("finished_at"))
             task_payload["deadline_at"] = self._to_aware(task_payload.get("deadline_at"))
+            
+            # Ensure repeat_days is a list of integers
+            if "repeat_days" in task_payload and task_payload["repeat_days"]:
+                task_payload["repeat_days"] = [int(d) for d in task_payload["repeat_days"]]
+            else:
+                 task_payload["repeat_days"] = []
+
+            # Handle repeat_until
+            if "repeat_until" in task_payload and task_payload["repeat_until"]:
+                try:
+                    # It might be a string if coming from raw JSON, or date object if parsed by Pydantic
+                    if isinstance(task_payload["repeat_until"], str):
+                        task_payload["repeat_until"] = datetime.strptime(task_payload["repeat_until"], "%Y-%m-%d").date()
+                except Exception:
+                     task_payload["repeat_until"] = None
+            else:
+                task_payload["repeat_until"] = None
 
             if task_payload.get("status_id") is None:
                 default_status = await Status.objects.order_by("id").afirst()
@@ -616,6 +635,9 @@ class TaskAsyncViewSet(ViewSet):
             if new_deadline_at is None and task.deadline_at is None and task_update_dto.finished_at is not None:
                 new_deadline_at = task_update_dto.finished_at
             task.deadline_at = self._to_aware(new_deadline_at)
+            
+            task.repeat_days = task_update_dto.repeat_days
+            task.repeat_until = task_update_dto.repeat_until
 
             await task.asave()
             allowed_tag_ids = []
@@ -830,7 +852,11 @@ class TaskAsyncViewSet(ViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         task_retrive_dto = TaskRetrieveDTO.model_validate(task)
-        
+            
+        # Ensure repeat_days is a list (JSONField can sometimes be None or other types if not initialized properly, though default=list helps)
+        if task_retrive_dto.repeat_days is None:
+            task_retrive_dto.repeat_days = []
+
         lifecycle, total_dur = await self._calculate_lifecycle(task)
         task_retrive_dto.lifecycle = lifecycle
         task_retrive_dto.total_duration = total_dur
