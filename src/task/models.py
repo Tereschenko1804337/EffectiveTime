@@ -68,6 +68,8 @@ class Task(models.Model):
     sprint = models.ForeignKey(to=Sprint, on_delete=models.SET_NULL, null=True, default=None)
     tags = models.ManyToManyField(to=Tag)
     category = models.ForeignKey(to=Category, on_delete=models.SET_NULL, null=True)
+    repeat_days = models.JSONField(default=list, blank=True)  # List of integers 0-6 (Mon-Sun)
+    repeat_until = models.DateField(null=True, default=None, blank=True)
 
     class Meta:
         db_table = "task"

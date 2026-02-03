@@ -51,6 +51,53 @@
                     <label class="custom-select-label">Дедлайн</label>
                     <input type="datetime-local" id="id_deadline_day" class="date-input">
                 </div>
+                
+                <div style="margin-top: 15px;">
+                    <label class="custom-select-label" style="margin-bottom: 5px; display: block;">Повторять по дням</label>
+                    <div class="week-days-selector" id="repeat-days-container">
+                        <div class="day-checkbox" data-day="0">Пн</div>
+                        <div class="day-checkbox" data-day="1">Вт</div>
+                        <div class="day-checkbox" data-day="2">Ср</div>
+                        <div class="day-checkbox" data-day="3">Чт</div>
+                        <div class="day-checkbox" data-day="4">Пт</div>
+                        <div class="day-checkbox" data-day="5">Сб</div>
+                        <div class="day-checkbox" data-day="6">Вс</div>
+                    </div>
+                </div>
+
+                <div id="repeat-until-wrapper" style="margin-top: 10px; display: none;">
+                    <label class="custom-select-label">Повторять до</label>
+                    <input type="date" id="id_repeat_until" class="date-input">
+                </div>
+
+                <style>
+                    .week-days-selector {
+                        display: flex;
+                        gap: 5px;
+                    }
+                    .day-checkbox {
+                        width: 30px;
+                        height: 30px;
+                        border-radius: 50%;
+                        background: rgba(255, 255, 255, 0.1);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        font-size: 12px;
+                        user-select: none;
+                        transition: all 0.2s;
+                        border: 1px solid transparent;
+                    }
+                    .day-checkbox:hover {
+                        background: rgba(255, 255, 255, 0.2);
+                    }
+                    .day-checkbox.selected {
+                        background: var(--accent-primary, #4a90e2);
+                        color: white;
+                        border-color: rgba(255, 255, 255, 0.3);
+                    }
+                </style>
             </div>
 
             <div class="input-group">
@@ -113,6 +160,46 @@
     var sphere = null;
     var status_select = null;
     var tags = null;
+
+    function initRepeatDays(initialDays = []) {
+        const container = document.getElementById('repeat-days-container');
+        const untilWrapper = document.getElementById('repeat-until-wrapper');
+        
+        if (!container) return;
+        
+        const updateVisibility = () => {
+             const hasSelection = container.querySelectorAll('.day-checkbox.selected').length > 0;
+             if (untilWrapper) {
+                 untilWrapper.style.display = hasSelection ? 'block' : 'none';
+             }
+        };
+
+        const checkboxes = container.querySelectorAll('.day-checkbox');
+        checkboxes.forEach(cb => {
+            cb.classList.remove('selected');
+            const day = parseInt(cb.dataset.day);
+            if (initialDays.includes(day)) {
+                cb.classList.add('selected');
+            }
+            
+            cb.onclick = () => {
+                cb.classList.toggle('selected');
+                updateVisibility();
+            };
+        });
+        
+        updateVisibility();
+    }
+
+    function getRepeatDays() {
+        const container = document.getElementById('repeat-days-container');
+        if (!container) return [];
+        const selected = [];
+        container.querySelectorAll('.day-checkbox.selected').forEach(cb => {
+            selected.push(parseInt(cb.dataset.day));
+        });
+        return selected;
+    }
 
     function addSubtaskRow(initial = {}, opts = {}) {
         const list = document.getElementById('subtasks-editor-list');
@@ -215,6 +302,11 @@
             document.getElementById('id_start_day').value = toDatetimeLocal(taskData.started_at);
             document.getElementById('id_end_day').value = toDatetimeLocal(taskData.finished_at);
             document.getElementById('id_deadline_day').value = toDatetimeLocal(taskData.deadline_at);
+            
+            if (taskData.repeat_until) {
+                 document.getElementById('id_repeat_until').value = taskData.repeat_until;
+            }
+
             if (window.quill_create_editor) {
                 window.quill_create_editor.root.innerHTML = taskData.description ?? '';
             }
@@ -226,6 +318,7 @@
             } else {
                 addSubtaskRow();
             }
+            initRepeatDays(taskData.repeat_days || []);
         } else {
             const initialData = window.initialTaskData;
             if (initialData) {
@@ -234,6 +327,7 @@
                 if (initialData.deadline_at) document.getElementById('id_deadline_day').value = initialData.deadline_at;
             }
             addSubtaskRow();
+            initRepeatDays([]);
         }
     })();
 </script>
@@ -270,6 +364,8 @@
             started_at: emptyToNull(document.getElementById('id_start_day').value),
             finished_at: emptyToNull(document.getElementById('id_end_day').value),
             deadline_at: emptyToNull(document.getElementById('id_deadline_day').value),
+            repeat_days: getRepeatDays(),
+            repeat_until: emptyToNull(document.getElementById('id_repeat_until').value),
         };
 
         // Basic Validation

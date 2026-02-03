@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from pydantic import BaseModel, field_validator
 
@@ -16,10 +16,19 @@ class TaskCreateDTO(BaseModel):
     status_id: int | None = None
     sprint_id: int | None = None
     category_id: int | None = None
+    repeat_days: list[int] = []
+    repeat_until: date | None = None
 
     @field_validator("started_at", "finished_at", "deadline_at", mode="before")
     @staticmethod
     def _empty_datetime_to_none(value):
+        if value == "" or value == "null" or value == "undefined":
+            return None
+        return value
+
+    @field_validator("repeat_until", mode="before")
+    @staticmethod
+    def _empty_date_to_none(value):
         if value == "" or value == "null" or value == "undefined":
             return None
         return value
@@ -51,6 +60,8 @@ class TaskRetrieveDTO(BaseModel):
     subtasks: list[SubtaskRetrieveDTO] = []
     lifecycle: list[TaskLifecycleSegment] = []
     total_duration: str = ""
+    repeat_days: list[int] = []
+    repeat_until: date | None = None
 
     @field_validator("subtasks", "tags", mode="before")
     @staticmethod
