@@ -214,3 +214,4 @@ __marimo__/
 /src/DEPLOY_UBUNTU_24_04.md
 /src/Dockerfile
 /src/requirements.txt
+/Pipfile.lock
