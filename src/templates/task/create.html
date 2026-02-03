@@ -1,0 +1,318 @@
+{% load static %}
+
+<div class="task_view_main_block">
+    <!-- Header -->
+    <div class="task-view--up-bar">
+        <div class="close-button" onclick="closeTaskView()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+    </div>
+
+    <div class="task-view-content-wrapper">
+        <!-- Main Info Section -->
+        <div class="task-view--section">
+            <div class="input-group">
+                <input type="text" placeholder="Название задачи" id="id_name" class="task-title-input" autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <h6 class="section-subtitle">Описание</h6>
+                <div class="description-container">
+                    <div class="main-info-discription"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parameters Section -->
+        <div class="task-view--section">
+            <h6 class="section-title">Параметры</h6>
+            
+            <div class="input-group">
+                <div class="status-select" id="status-select-container"></div>
+            </div>
+
+            <div class="input-group">
+                <div class="sphere-select" id="sphere-select-container"></div>
+            </div>
+
+            <div class="input-group">
+                <h6 class="section-subtitle">Сроки</h6>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label class="custom-select-label">Начало</label>
+                        <input type="datetime-local" id="id_start_day" class="date-input">
+                    </div>
+                    <div>
+                        <label class="custom-select-label">Конец</label>
+                        <input type="datetime-local" id="id_end_day" class="date-input">
+                    </div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label class="custom-select-label">Дедлайн</label>
+                    <input type="datetime-local" id="id_deadline_day" class="date-input">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="subtasks-wrapper">
+                    <div class="subtasks-header">
+                        <h6 class="section-subtitle" style="margin:0;">Подзадачи</h6>
+                        <button type="button" class="add-subtask-btn" onclick="addSubtaskRow()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+                    <div id="subtasks-editor-list"></div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="tags-select" id="tags-select-container"></div>
+            </div>
+        </div>
+        
+        <div style="height: 40px;"></div> <!-- Spacer -->
+    </div>
+    
+    <!-- Footer / Save Button -->
+    <div style="padding: 20px; border-top: 1px solid var(--border-subtle);">
+        <button type="button" class="btn btn-primary" id="task-save-button" onclick="create_task()" style="width: 100%;">Сохранить</button>
+    </div>
+</div>
+
+<!-- Save Overlay -->
+<div class="task-save-overlay hide" id="task-save-overlay" aria-hidden="true">
+    <div class="task-save-card">
+        <div class="spinner"></div>
+        <div class="task-save-overlay-title">Сохраняю...</div>
+        <div class="task-save-overlay-subtitle" id="task-save-overlay-text">Подождите немного</div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    // Initialize Quill
+    (function() {
+        const toolbar = [
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link'], // 'image' removed for simplicity unless backend supports it
+            [{ align: [] }]
+        ];
+
+        window.quill_create_editor = new Quill('.main-info-discription', {
+            theme: 'snow',
+            placeholder: 'Добавьте описание...',
+            modules: {
+                toolbar: { container: toolbar }
+            }
+        });
+    })();
+</script>
+
+<script type="text/javascript">
+    var sphere = null;
+    var status_select = null;
+    var tags = null;
+
+    function addSubtaskRow(initial = {}, opts = {}) {
+        const list = document.getElementById('subtasks-editor-list');
+        if (!list) return;
+
+        const row = document.createElement('div');
+        row.className = 'subtask-row';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'subtask-input';
+        input.placeholder = 'Название подзадачи...';
+        input.value = initial.name ?? '';
+        if (initial.id) input.dataset.subtaskId = String(initial.id);
+
+        row.appendChild(input);
+        
+        const afterRow = opts.afterRow || null;
+        if (afterRow && afterRow.parentElement === list) {
+            afterRow.insertAdjacentElement('afterend', row);
+        } else {
+            list.appendChild(row);
+        }
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const nextInput = addSubtaskRow({}, { afterRow: row });
+                if (nextInput) nextInput.focus();
+            } else if (e.key === 'Backspace' && input.value === '') {
+                 // Optional: remove empty row on backspace
+                 e.preventDefault();
+                 row.remove();
+            }
+        });
+
+        return input;
+    }
+
+    function getSubtasksPayload() {
+        const list = document.getElementById('subtasks-editor-list');
+        if (!list) return [];
+        const inputs = Array.from(list.querySelectorAll('input'));
+        const payload = [];
+        inputs.forEach(inp => {
+            const name = (inp.value ?? '').toString().trim();
+            if (!name) return;
+            const id = inp.dataset.subtaskId ? parseInt(inp.dataset.subtaskId, 10) : null;
+            if (id) payload.push({ id, name });
+            else payload.push({ name });
+        });
+        return payload;
+    }
+
+    (async function initCreateOrEditForm() {
+        const editTaskId = window.editTaskId ?? null;
+
+        const [pageInfo, taskData] = await Promise.all([
+            request({ url: '/task/creating/' }),
+            editTaskId ? request({ url: `/task/${editTaskId}/view/` }) : Promise.resolve(null),
+        ]);
+
+        status_select = initGlassSelect({
+            items: pageInfo.statuses,
+            selector: '.status-select',
+            title: 'Статус',
+            value: taskData?.status?.id ?? (pageInfo?.statuses?.[0]?.id ?? null),
+        });
+        
+        sphere = initGlassSelect({
+            items: pageInfo.categories,
+            selector: '.sphere-select',
+            title: 'Сфера',
+            value: taskData?.category?.id ?? (window.defaultCategoryId ?? null),
+        });
+        
+        tags = initGlassSelect({
+            items: pageInfo.tags,
+            selector: '.tags-select',
+            title: 'Тэги',
+            multiple: true,
+            dynamicCreate: true,
+            url: '/task/tags/',
+            values: Array.isArray(taskData?.tags) ? taskData.tags.map(t => t.id) : null,
+        });
+
+        if (editTaskId && taskData) {
+            const saveBtn = document.getElementById('task-save-button');
+            if (saveBtn) saveBtn.innerText = 'Сохранить изменения';
+
+            document.getElementById('id_name').value = taskData.name ?? '';
+
+            const toDatetimeLocal = (value) => {
+                if (!value) return '';
+                const d = new Date(value);
+                const pad = (n) => String(n).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            };
+
+            document.getElementById('id_start_day').value = toDatetimeLocal(taskData.started_at);
+            document.getElementById('id_end_day').value = toDatetimeLocal(taskData.finished_at);
+            document.getElementById('id_deadline_day').value = toDatetimeLocal(taskData.deadline_at);
+            if (window.quill_create_editor) {
+                window.quill_create_editor.root.innerHTML = taskData.description ?? '';
+            }
+
+            const list = document.getElementById('subtasks-editor-list');
+            if (list) list.innerHTML = '';
+            if (Array.isArray(taskData.subtasks) && taskData.subtasks.length) {
+                taskData.subtasks.forEach(s => addSubtaskRow({ id: s.id, name: s.name }));
+            } else {
+                addSubtaskRow();
+            }
+        } else {
+            const initialData = window.initialTaskData;
+            if (initialData) {
+                if (initialData.started_at) document.getElementById('id_start_day').value = initialData.started_at;
+                if (initialData.finished_at) document.getElementById('id_end_day').value = initialData.finished_at;
+                if (initialData.deadline_at) document.getElementById('id_deadline_day').value = initialData.deadline_at;
+            }
+            addSubtaskRow();
+        }
+    })();
+</script>
+
+<script type="text/javascript">
+    async function create_task() {
+        const editTaskId = window.editTaskId ?? null;
+        const emptyToNull = (v) => {
+            const s = (v ?? '').toString().trim();
+            return s ? s : null;
+        };
+        const saveBtn = document.getElementById('task-save-button');
+        const overlay = document.getElementById('task-save-overlay');
+        const overlayText = document.getElementById('task-save-overlay-text');
+        
+        const setSavingState = (saving, opts = {}) => {
+            if (saveBtn) saveBtn.disabled = saving;
+            if (overlay) {
+                overlay.classList.toggle('hide', !saving);
+                overlay.setAttribute('aria-hidden', saving ? 'false' : 'true');
+            }
+            if (overlayText && opts.overlayText) {
+                overlayText.textContent = opts.overlayText;
+            }
+        };
+
+        let body = {
+            category_id: sphere.values[0] ? parseInt(sphere.values[0]) : null, 
+            status_id: status_select.values[0] ? parseInt(status_select.values[0]) : null,
+            tags: tags.values ? tags.values.map(t => parseInt(t)) : [],
+            subtasks: getSubtasksPayload(),
+            description: window.quill_create_editor ? window.quill_create_editor.root.innerHTML : '',
+            name: document.getElementById('id_name').value,
+            started_at: emptyToNull(document.getElementById('id_start_day').value),
+            finished_at: emptyToNull(document.getElementById('id_end_day').value),
+            deadline_at: emptyToNull(document.getElementById('id_deadline_day').value),
+        };
+
+        // Basic Validation
+        if (!body.name) {
+            alert('Введите название задачи');
+            return;
+        }
+
+        const shouldAiPlan = !body.started_at && !!(body.deadline_at || body.finished_at);
+        setSavingState(true, {
+            overlayText: shouldAiPlan ? 'AI планирует задачу...' : 'Сохранение...',
+        });
+
+        try {
+            if (editTaskId) {
+                const res = await request({
+                    url: `/task/${editTaskId}/updating/`,
+                    method: "PATCH",
+                    body: body,
+                });
+                if (res === undefined) throw new Error('Update failed');
+                
+                closeTaskView();
+                open_task_by_id(editTaskId); // Re-open view mode
+            } else {
+                const data = await request({
+                    url: '/task/creating/',
+                    method: "POST",
+                    body: body,
+                });
+                if (!data || !data.id) throw new Error('Create failed');
+                
+                closeTaskView();
+                open_task_by_id(data.id); // Open new task in view mode
+                
+                // Refresh board/calendar if possible (would need reload or event bus)
+                // window.location.reload(); 
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Ошибка при сохранении');
+        } finally {
+            setSavingState(false);
+        }
+    }
+</script>

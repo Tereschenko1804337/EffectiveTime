@@ -1,0 +1,417 @@
+{% extends 'index.html' %}
+
+{% block links_block %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .analytics-container {
+            padding: var(--space-32);
+            height: 100%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-32);
+        }
+
+        .analytics-header {
+            margin-bottom: var(--space-16);
+        }
+        
+        .analytics-title {
+            font-size: var(--text-2xl);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-24);
+        }
+
+        .kpi-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .kpi-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--space-8);
+        }
+
+        .kpi-label {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-24);
+        }
+        
+        @media (max-width: 1000px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+            box-shadow: var(--shadow-sm);
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-title {
+            font-size: var(--text-lg);
+            font-weight: 600;
+            margin-bottom: var(--space-24);
+            color: var(--text-primary);
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* AI Report Section */
+        .ai-report-section {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-32);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-24);
+        }
+        
+        .ai-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ai-score-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--bg-element);
+            border: 4px solid var(--accent-primary);
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--accent-primary);
+        }
+
+        .ai-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .ai-content.visible {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-24);
+        }
+        
+        .ai-summary {
+            font-size: var(--text-lg);
+            font-style: italic;
+            color: var(--text-secondary);
+            border-left: 4px solid var(--accent-primary);
+            padding-left: var(--space-16);
+        }
+
+        .markdown-body {
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+        
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+            font-weight: 600;
+        }
+        
+        .markdown-body ul {
+            padding-left: 20px;
+            margin-bottom: 1em;
+        }
+        
+        .markdown-body li {
+            margin-bottom: 0.25em;
+        }
+        
+        .recommendations-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-16);
+        }
+        
+        .rec-card {
+            background: var(--bg-app);
+            padding: var(--space-16);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+        }
+        
+        .rec-card strong {
+            display: block;
+            margin-bottom: var(--space-8);
+            color: var(--accent-success);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="right_panel" style="display: block;">
+    <div class="analytics-container">
+        
+        <div class="analytics-header">
+            <h1 class="analytics-title">Аналитика задач</h1>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <span class="kpi-value" id="kpi-total">—</span>
+                <span class="kpi-label">Всего задач</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-value" id="kpi-completed" style="color: var(--accent-success, #2da44e);">—</span>
+                <span class="kpi-label">Завершено</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-value" id="kpi-rate" style="color: var(--accent-primary);">—%</span>
+                <span class="kpi-label">Продуктивность</span>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            
+            <!-- Daily Activity -->
+            <div class="chart-card">
+                <h3 class="chart-title">Активность за 7 дней</h3>
+                <div class="chart-wrapper">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Lifecycle (Time in Status) -->
+            <div class="chart-card">
+                <h3 class="chart-title">Время в статусах (все задачи)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="lifecycleChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="chart-card">
+                <h3 class="chart-title">По категориям</h3>
+                <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Statuses -->
+            <div class="chart-card">
+                <h3 class="chart-title">Распределение по статусам</h3>
+                <div class="chart-wrapper">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- AI Report Section -->
+        <div class="ai-report-section">
+            <div class="ai-header">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <h2 class="section-title" style="margin:0;">AI Анализ продуктивности</h2>
+                    <span style="font-size: 12px; color: var(--text-tertiary); background: var(--bg-element); padding: 4px 8px; border-radius: 12px;">BETA</span>
+                </div>
+                <button class="btn btn-primary" id="generate-ai-btn" onclick="generateAIReport()">
+                    <span id="ai-btn-text">Сгенерировать отчет</span>
+                    <span id="ai-btn-loader" class="spinner" style="width: 16px; height: 16px; border-width: 2px; display: none;"></span>
+                </button>
+            </div>
+
+            <div id="ai-content-block" class="ai-content">
+                <div style="display: flex; gap: 24px; align-items: flex-start;">
+                    <div class="ai-score-badge" id="ai-score">0</div>
+                    <div class="ai-summary" id="ai-summary"></div>
+                </div>
+
+                <div class="recommendations-list" id="ai-recommendations"></div>
+                
+                <div style="border-top: 1px solid var(--border-subtle);"></div>
+                
+                <div class="markdown-body" id="ai-analysis-text"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const data = await request({ url: '/task/analytics/data/', method: 'GET' });
+            renderDashboard(data);
+        } catch (e) {
+            console.error("Analytics error", e);
+        }
+    });
+
+    function renderDashboard(data) {
+        // 1. KPI
+        document.getElementById('kpi-total').textContent = data.kpi.total;
+        document.getElementById('kpi-completed').textContent = data.kpi.completed;
+        document.getElementById('kpi-rate').textContent = data.kpi.completion_rate + '%';
+
+        // Chart.js defaults
+        Chart.defaults.color = '#57606a'; 
+        Chart.defaults.borderColor = '#d0d7de'; 
+        Chart.defaults.font.family = 'inherit';
+
+        // 2. Daily Chart
+        new Chart(document.getElementById('dailyChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: data.daily.map(d => d.date),
+                datasets: [{
+                    label: 'Создано',
+                    data: data.daily.map(d => d.count),
+                    backgroundColor: 'rgba(9, 105, 218, 0.6)',
+                    borderColor: 'rgba(9, 105, 218, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 3. Lifecycle Chart (Horizontal Bar)
+        new Chart(document.getElementById('lifecycleChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: data.lifecycle.map(l => l.status),
+                datasets: [{
+                    label: 'Часов',
+                    data: data.lifecycle.map(l => l.hours),
+                    backgroundColor: data.lifecycle.map(l => l.color || '#ccc'),
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Horizontal bar
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { beginAtZero: true, title: { display: true, text: 'Часы' } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // 4. Category Chart
+        new Chart(document.getElementById('categoryChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: data.categories.map(c => c.category__name),
+                datasets: [{
+                    data: data.categories.map(c => c.count),
+                    backgroundColor: ['#0969da', '#2da44e', '#cf222e', '#bf3989', '#8250df', '#d29922', '#6e7781'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+        });
+
+        // 5. Status Chart
+        new Chart(document.getElementById('statusChart').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: data.statuses.map(s => s.status__name),
+                datasets: [{
+                    data: data.statuses.map(s => s.count),
+                    backgroundColor: data.statuses.map(s => s.status__color || '#ccc'),
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+        });
+    }
+
+    async function generateAIReport() {
+        const btn = document.getElementById('generate-ai-btn');
+        const loader = document.getElementById('ai-btn-loader');
+        const text = document.getElementById('ai-btn-text');
+        const contentBlock = document.getElementById('ai-content-block');
+
+        btn.disabled = true;
+        loader.style.display = 'inline-block';
+        text.textContent = 'Анализирую...';
+        contentBlock.classList.remove('visible');
+
+        try {
+            const result = await request({ url: '/task/analytics/ai-report/', method: 'POST' });
+            
+            // Render result
+            document.getElementById('ai-score').textContent = result.score;
+            document.getElementById('ai-score').style.borderColor = result.score > 70 ? 'var(--accent-success)' : (result.score > 40 ? 'var(--accent-warning, #d29922)' : 'var(--accent-danger, #cf222e)');
+            
+            document.getElementById('ai-summary').textContent = result.summary;
+            document.getElementById('ai-analysis-text').innerHTML = marked.parse(result.analysis);
+            
+            const recContainer = document.getElementById('ai-recommendations');
+            recContainer.innerHTML = '';
+            if (result.recommendations && result.recommendations.length) {
+                result.recommendations.forEach((rec, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'rec-card';
+                    card.innerHTML = `<strong>Совет #${idx+1}</strong><p style="margin:0; font-size: 14px;">${rec}</p>`;
+                    recContainer.appendChild(card);
+                });
+            }
+
+            contentBlock.classList.add('visible');
+        } catch (e) {
+            console.error(e);
+            alert('Ошибка при генерации отчета. Попробуйте позже.');
+        } finally {
+            btn.disabled = false;
+            loader.style.display = 'none';
+            text.textContent = 'Сгенерировать отчет';
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,377 @@
+{% load static %}
+
+<div class="task_view_main_block">
+    <!-- Header -->
+    <div class="task-view--up-bar">
+        <!-- Edit Button -->
+        <button type="button" class="btn" onclick="window.open_task_edit_by_id(window.currentTaskId)" style="margin-right: auto;">
+            Изменить
+        </button>
+        
+        <div class="close-button" onclick="closeTaskView()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+    </div>
+
+    <div class="task-view-content-wrapper">
+        <!-- Main Info -->
+        <div class="task-view--section">
+            <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px;">
+                <h1 id="task-title" style="font-size: 24px; font-weight: 600; color: var(--text-primary); margin: 0; line-height: 1.3;"></h1>
+                <div class="copy-button" onclick="copy_text(this)" style="cursor: pointer; padding: 5px; opacity: 0.7;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </div>
+            </div>
+
+            <div class="description-container">
+                <div class="main-info-discription" id="task-description" style="padding: 15px; color: var(--text-primary);"></div>
+            </div>
+        </div>
+
+        <div style="border-bottom: 1px solid var(--border-subtle);"></div>
+
+        <!-- Parameters -->
+        <div class="task-view--section">
+            <h6 class="section-title">Детали</h6>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h6 class="section-subtitle">Статус</h6>
+                    <div id="task-status" style="font-size: 14px; color: var(--text-primary); background: var(--bg-element); padding: 5px 10px; border-radius: 6px; display: inline-block;">—</div>
+                </div>
+                <div>
+                     <h6 class="section-subtitle">Тэги</h6>
+                     <div id="task-tags" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <h6 class="section-subtitle">Начало</h6>
+                    <div id="task-started-at" style="font-size: 14px; color: var(--text-primary);">—</div>
+                </div>
+                <div>
+                    <h6 class="section-subtitle">Конец</h6>
+                    <div id="task-finished-at" style="font-size: 14px; color: var(--text-primary);">—</div>
+                </div>
+                <div>
+                    <h6 class="section-subtitle">Дедлайн</h6>
+                    <div id="task-deadline-at" style="font-size: 14px; color: var(--text-primary);">—</div>
+                </div>
+            </div>
+            
+            <div>
+                <h6 class="section-subtitle">Подзадачи</h6>
+                <div id="task-subtasks" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+        </div>
+
+        <div style="border-bottom: 1px solid var(--border-subtle);"></div>
+
+        <!-- Lifecycle Section -->
+        <div class="task-view--section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h6 class="section-title" style="margin: 0;">Жизненный цикл задачи</h6>
+                <span id="lifecycle-total" style="font-size: 14px; color: var(--text-secondary);"></span>
+            </div>
+            
+            <div id="lifecycle-bar" style="display: flex; width: 100%; height: 24px; border-radius: 6px; overflow: hidden; margin-bottom: 15px; background: var(--bg-element);"></div>
+            
+            <div id="lifecycle-legend" style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; font-size: 12px; color: var(--text-secondary);"></div>
+        </div>
+
+        <div style="border-bottom: 1px solid var(--border-subtle);"></div>
+
+        <!-- Tabs: Comments / History -->
+        <div class="task-view--section">
+            <div class="tabs-header">
+                <div id="comment-tab" class="tab-btn active" onclick="switchTab('comment')">Комментарии</div>
+                <div id="history-tab" class="tab-btn" onclick="switchTab('history')">История</div>
+            </div>
+
+            <!-- Comments Section -->
+            <div id="comment-section" class="tab-content">
+                <div style="margin-bottom: 15px;">
+                    <div class="description-container" style="background: var(--bg-element);">
+                        <div id="comment-editor" style="height: 100px;"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="window.sendComment()" style="margin-top: 10px;">Отправить</button>
+                </div>
+                <div id="comments-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+
+            <!-- History Section -->
+            <div id="history-section" class="tab-content" style="display: none;">
+                <div id="history-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function switchTab(tabName) {
+        const commentTab = document.getElementById('comment-tab');
+        const historyTab = document.getElementById('history-tab');
+        const commentSec = document.getElementById('comment-section');
+        const historySec = document.getElementById('history-section');
+
+        if (tabName === 'comment') {
+            commentTab.classList.add('active');
+            historyTab.classList.remove('active');
+            commentSec.style.display = 'block';
+            historySec.style.display = 'none';
+        } else {
+            commentTab.classList.remove('active');
+            historyTab.classList.add('active');
+            commentSec.style.display = 'none';
+            historySec.style.display = 'block';
+            if (window.currentTaskId) window.loadHistory(window.currentTaskId);
+        }
+    }
+
+    // Initialize Quill for Comments
+    (function() {
+        const toolbar = [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link', 'code-block']
+        ];
+        
+        window.commentTextField = new Quill('#comment-editor', {
+            theme: 'snow',
+            placeholder: 'Написать комментарий...',
+            modules: { toolbar: toolbar }
+        });
+    })();
+</script>
+
+<script type="text/javascript">
+    window.currentTaskId = null;
+
+    window.populateTaskData = function(task) {
+        window.currentTaskId = task.id;
+        document.getElementById('task-title').textContent = task.name;
+        document.getElementById('task-description').innerHTML = task.description || '<span style="color:var(--text-secondary)">Нет описания</span>';
+        
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '—';
+            return new Date(dateStr).toLocaleString('ru-RU', {
+                day: '2-digit', month: '2-digit', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit'
+            });
+        };
+
+        document.getElementById('task-started-at').textContent = formatDate(task.started_at);
+        document.getElementById('task-finished-at').textContent = formatDate(task.finished_at);
+        document.getElementById('task-deadline-at').textContent = formatDate(task.deadline_at);
+        
+        const statusEl = document.getElementById('task-status');
+        if (task.status) {
+             statusEl.textContent = task.status.name;
+        } else {
+             statusEl.textContent = '—';
+        }
+
+        const tagsContainer = document.getElementById('task-tags');
+        tagsContainer.innerHTML = '';
+        if (task.tags && task.tags.length) {
+            task.tags.forEach(tag => {
+                const t = document.createElement('div');
+                t.style.cssText = 'background: rgba(88,166,255,0.1); color: var(--accent-primary); padding: 2px 8px; border-radius: 4px; font-size: 12px; border: 1px solid rgba(88,166,255,0.2);';
+                t.textContent = tag.name;
+                tagsContainer.appendChild(t);
+            });
+        } else {
+            tagsContainer.innerHTML = '<span style="color:var(--text-tertiary); font-size:12px;">Нет тэгов</span>';
+        }
+
+        const subtasksContainer = document.getElementById('task-subtasks');
+        subtasksContainer.innerHTML = '';
+        if (task.subtasks && task.subtasks.length) {
+            task.subtasks.forEach(sub => {
+                subtasksContainer.innerHTML += `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" style="cursor: pointer;" ${sub.completed ? 'checked' : ''} onchange="window.toggleSubtaskCompleted(${task.id}, ${sub.id}, this)">
+                        <span style="font-size: 14px; color: var(--text-primary); ${sub.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${sub.name}</span>
+                    </div>
+                `;
+            });
+        } else {
+             subtasksContainer.innerHTML = '<span style="color:var(--text-tertiary); font-size:12px;">Нет подзадач</span>';
+        }
+
+        // Lifecycle
+        document.getElementById('lifecycle-total').textContent = task.total_duration || '—';
+        const lifeBar = document.getElementById('lifecycle-bar');
+        const lifeLegend = document.getElementById('lifecycle-legend');
+        lifeBar.innerHTML = '';
+        lifeLegend.innerHTML = '';
+
+        if (task.lifecycle && task.lifecycle.length) {
+            const seenStatuses = new Set();
+            
+            task.lifecycle.forEach(seg => {
+                // Bar segment
+                if (seg.percent > 0) {
+                    const el = document.createElement('div');
+                    el.style.width = seg.percent + '%';
+                    el.style.backgroundColor = seg.color;
+                    el.style.height = '100%';
+                    el.title = `${seg.status}: ${seg.duration}`;
+                    el.style.transition = 'width 0.5s ease';
+                    
+                    // Optional: text inside if wide enough
+                    if (seg.percent > 10) {
+                        el.style.display = 'flex';
+                        el.style.alignItems = 'center';
+                        el.style.justifyContent = 'center';
+                        el.style.color = '#fff';
+                        el.style.fontSize = '10px';
+                        el.style.overflow = 'hidden';
+                        el.style.whiteSpace = 'nowrap';
+                        el.textContent = seg.duration;
+                        el.style.textShadow = '0 0 2px rgba(0,0,0,0.5)';
+                    }
+                    lifeBar.appendChild(el);
+                }
+
+                // Legend
+                if (!seenStatuses.has(seg.status)) {
+                    seenStatuses.add(seg.status);
+                    
+                    // Sum up duration for this status across all segments
+                    const totalSecs = task.lifecycle
+                        .filter(s => s.status === seg.status)
+                        .reduce((acc, curr) => acc + (curr.duration_seconds || 0), 0);
+                        
+                    // Format total duration
+                    let durStr = '';
+                    if (totalSecs < 60) durStr = "< 1 мин";
+                    else {
+                        const m = Math.floor(totalSecs / 60);
+                        const h = Math.floor(m / 60);
+                        const d = Math.floor(h / 24);
+                        if (d > 0) durStr = `${d} дн ${h%24} ч`;
+                        else if (h > 0) durStr = `${h} ч ${m%60} мин`;
+                        else durStr = `${m} мин`;
+                    }
+                    
+                    const item = document.createElement('div');
+                    item.className = 'lifecycle-legend-item';
+                    item.setAttribute('data-tooltip', `${seg.status}: ${durStr}`);
+                    item.style.display = 'flex';
+                    item.style.alignItems = 'center';
+                    item.style.gap = '6px';
+                    item.style.cursor = 'pointer';
+                    
+                    item.innerHTML = `
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background-color: ${seg.color};"></div>
+                        <span>${seg.status}</span>
+                    `;
+                    lifeLegend.appendChild(item);
+                }
+            });
+        } else {
+            lifeBar.innerHTML = '<div style="width: 100%; text-align: center; color: var(--text-tertiary); line-height: 24px; font-size: 12px;">Нет данных</div>';
+        }
+
+        window.loadComments(task.id);
+        // Load history only if tab active, or pre-load
+        // window.loadHistory(task.id); 
+    };
+
+    window.loadComments = function(taskId) {
+       request({ url: `/task/${taskId}/comments/` }).then(comments => {
+           if (!comments || !Array.isArray(comments)) return;
+           const container = document.getElementById('comments-container');
+           container.innerHTML = '';
+           comments.forEach(comment => window.addCommentToDOM(comment, 'beforeend'));
+       });
+    };
+
+    window.addCommentToDOM = function(comment, position = 'afterbegin') {
+       const container = document.getElementById('comments-container');
+       const dateStr = new Date(comment.created_at).toLocaleString('ru-RU', {
+           day: '2-digit', month: '2-digit', year: 'numeric', 
+           hour: '2-digit', minute: '2-digit'
+       });
+
+       const html = `
+           <div class="comment-block">
+               <div class="comment-header">
+                   <div class="comment-user">${comment.user_name}</div>
+                   <div class="comment-date">${dateStr}</div>
+               </div>
+               <div class="user-comment-text ql-editor" style="padding:0;">${comment.text}</div>
+           </div>
+       `;
+       container.insertAdjacentHTML(position, html);
+    };
+
+    window.sendComment = function() {
+       if (!window.currentTaskId) return;
+       if (!window.commentTextField) return;
+       
+       const text = window.commentTextField.root.innerHTML;
+       const plain = window.commentTextField.getText().trim();
+       if (plain.length === 0) return;
+
+       request({
+           url: `/task/${window.currentTaskId}/comments/`,
+           method: 'POST',
+           body: { text: text }
+       }).then(newComment => {
+           window.addCommentToDOM(newComment);
+           window.commentTextField.setContents([]); 
+       }).catch(err => {
+           console.error(err);
+           alert('Ошибка отправки');
+       });
+    };
+
+    window.loadHistory = function(taskId) {
+       request({ url: `/task/${taskId}/history/` }).then(items => {
+           if (!items || !Array.isArray(items)) return;
+           const container = document.getElementById('history-container');
+           container.innerHTML = '';
+           items.forEach(item => window.addHistoryToDOM(item, 'beforeend'));
+       });
+    };
+
+    window.addHistoryToDOM = function(item, position = 'afterbegin') {
+        const container = document.getElementById('history-container');
+        
+        const dateStr = new Date(item.created_at).toLocaleString('ru-RU', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        
+        let content = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span class="history-item-field">${item.field || 'Обновление'}</span>
+                <span class="history-item-date" style="font-size: 10px; color: var(--text-tertiary);">${dateStr}</span>
+            </div>
+        `;
+
+        const oldVal = item.old_value ?? '—';
+        const newVal = item.new_value ?? '—';
+        
+        if (oldVal !== '—' || newVal !== '—') {
+            content += `
+                <div class="history-item-change">
+                    <span style="color: var(--accent-danger);">${oldVal}</span>
+                    <span style="color: var(--text-secondary); margin: 0 5px;">→</span>
+                    <span style="color: var(--accent-success);">${newVal}</span>
+                </div>
+            `;
+        }
+        
+        div.innerHTML = content;
+
+        if (position === 'beforeend') container.appendChild(div);
+        else container.prepend(div);
+    };
+</script>

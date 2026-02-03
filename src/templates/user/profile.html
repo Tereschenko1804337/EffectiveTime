@@ -1,0 +1,905 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block links_block %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <style>
+        .profile-container {
+            padding: var(--space-32);
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .profile-header {
+            margin-bottom: var(--space-32);
+        }
+
+        .profile-title {
+            font-size: var(--text-2xl);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: var(--space-32);
+        }
+
+        /* Avatar Section */
+        .avatar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-16);
+        }
+
+        .avatar-preview-lg {
+            width: 200px;
+            height: 200px;
+            border-radius: var(--radius-full);
+            background-color: var(--bg-element);
+            background-size: cover;
+            background-position: center;
+            border: 2px solid var(--border-subtle);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+
+        .avatar-preview-lg:hover .avatar-overlay {
+            opacity: 1;
+        }
+
+        .avatar-overlay svg {
+            color: white;
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Forms Section */
+        .form-section {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-16);
+        }
+
+        .form-label {
+            display: block;
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-8);
+        }
+
+        .form-value {
+            font-size: var(--text-base);
+            color: var(--text-primary);
+            padding: var(--space-8) 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        /* Cropper Modal */
+        .cropper-modal-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .cropper-wrapper {
+            max-width: 80vh;
+            max-height: 80vh;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .cropper-wrapper img {
+            max-width: 100%;
+            display: block;
+        }
+
+        .cropper-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .wallpaper-modal-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2100;
+            display: none;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .wallpaper-modal {
+            width: min(860px, 100%);
+            margin: 40px auto;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+        }
+
+        .wallpaper-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-12);
+            margin-bottom: var(--space-16);
+        }
+
+        .wallpaper-modal-title {
+            font-size: var(--text-lg);
+            font-weight: 700;
+        }
+
+        .wallpaper-close-btn {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .wallpaper-url-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: var(--space-10);
+            align-items: center;
+            margin-top: var(--space-12);
+        }
+
+        .wallpaper-url {
+            width: 100%;
+            background: var(--bg-app);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-size: var(--text-sm);
+        }
+
+        .wallpaper-preview {
+            display: none;
+        }
+
+        .wallpaper-live {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-app);
+            margin-top: var(--space-16);
+            overflow: hidden;
+        }
+
+        .wallpaper-live-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .wallpaper-live-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        .wallpaper-live-remaining {
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .wallpaper-live-label {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+        }
+
+        .wallpaper-live-sub {
+            font-size: var(--text-xs);
+            color: var(--text-tertiary);
+        }
+
+        .wallpaper-live-list {
+            display: grid;
+            gap: 8px;
+            margin-top: var(--space-16);
+        }
+
+        .wallpaper-live-item {
+            display: grid;
+            grid-template-columns: 10px 1fr auto;
+            align-items: start;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-app);
+        }
+
+        .wallpaper-live-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+        }
+
+        .wallpaper-live-title {
+            font-size: var(--text-sm);
+            font-weight: 600;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            line-height: 1.35;
+        }
+
+        .wallpaper-live-due {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            white-space: nowrap;
+            padding-top: 2px;
+        }
+
+        .wallpaper-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-16);
+            margin-top: var(--space-16);
+        }
+
+        .wallpaper-col h4 {
+            margin-bottom: var(--space-10);
+            font-size: var(--text-sm);
+            font-weight: 700;
+        }
+
+        .wallpaper-col ol {
+            padding-left: 18px;
+            color: var(--text-secondary);
+            font-size: var(--text-sm);
+            line-height: 1.6;
+        }
+
+        .wallpaper-hint {
+            color: var(--text-tertiary);
+            font-size: var(--text-xs);
+            margin-top: var(--space-10);
+        }
+
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            .avatar-section {
+                margin-bottom: var(--space-24);
+            }
+            .wallpaper-cols {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="right_panel" style="display: block;"> <!-- Override grid layout of right_panel -->
+    <div class="profile-container">
+        <div class="profile-header">
+            <h1 class="profile-title">Личный кабинет</h1>
+        </div>
+
+        <div class="profile-grid">
+            <!-- Left: Avatar -->
+            <div class="avatar-section">
+                <div class="avatar-preview-lg" id="avatar-preview" onclick="document.getElementById('avatar-input').click()">
+                    <div class="avatar-overlay">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    </div>
+                </div>
+                <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+                <p style="font-size: var(--text-xs); color: var(--text-tertiary); text-align: center;">
+                    Нажмите на фото, чтобы изменить
+                </p>
+            </div>
+
+            <!-- Right: Info & Password -->
+            <div style="display: flex; flex-direction: column; gap: var(--space-24);">
+                
+                <!-- Basic Info -->
+                <div class="form-section">
+                    <h3 style="margin-bottom: var(--space-16); font-size: var(--text-lg); font-weight: 600;">Данные</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Имя пользователя</label>
+                        <div class="form-value" id="profile-username">—</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <div class="form-value" id="profile-email">—</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Имя</label>
+                        <div class="form-value" id="profile-fullname">—</div>
+                    </div>
+                </div>
+
+                <!-- Change Password -->
+                <div class="form-section">
+                    <h3 style="margin-bottom: var(--space-16); font-size: var(--text-lg); font-weight: 600;">Смена пароля</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Текущий пароль</label>
+                        <input type="password" id="old-password" class="glass-input-text">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Новый пароль</label>
+                        <input type="password" id="new-password" class="glass-input-text">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Повторите пароль</label>
+                        <input type="password" id="confirm-password" class="glass-input-text">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="changePassword()" style="width: 100%;">Обновить пароль</button>
+                </div>
+
+                <div class="form-section">
+                    <h3 style="margin-bottom: var(--space-16); font-size: var(--text-lg); font-weight: 600;">Обои</h3>
+                    <div style="display: grid; gap: var(--space-10);">
+                        <div style="color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6;">
+                            Можно сделать “обои на сегодня”, которые обновляются по URL (как Life Calendar).
+                        </div>
+                        <button class="btn btn-primary" onclick="openWallpaperGuide()">Сделать обои</button>
+                        <div class="wallpaper-hint">
+                            Работает только если телефон видит твой сервер по HTTPS (домен/туннель/VPN).
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cropper Modal -->
+<div class="cropper-modal-container" id="cropper-modal">
+    <div class="cropper-wrapper">
+        <img id="cropper-image" src="">
+    </div>
+    <div class="cropper-actions">
+        <button class="btn btn-primary" onclick="cropAndUpload()">Сохранить</button>
+        <button class="btn" onclick="closeCropper()" style="background: white; color: black;">Отмена</button>
+    </div>
+</div>
+
+<div class="wallpaper-modal-container" id="wallpaper-modal">
+    <div class="wallpaper-modal">
+        <div class="wallpaper-modal-header">
+            <div class="wallpaper-modal-title">Обои на сегодня</div>
+            <button type="button" class="wallpaper-close-btn" onclick="closeWallpaperGuide()">Закрыть</button>
+        </div>
+
+        <div style="color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6;">
+            Этот URL отдаёт PNG-картинку под размер твоего экрана. Дальше ты настраиваешь автоматизацию на телефоне, которая скачивает PNG и ставит его обоями.
+        </div>
+
+        <div class="wallpaper-url-row">
+            <input class="wallpaper-url" id="wallpaper-url" readonly value="—">
+            <button type="button" class="btn" onclick="copyWallpaperUrl()">Скопировать</button>
+        </div>
+
+        <div class="wallpaper-live">
+            <canvas class="wallpaper-live-canvas" id="wallpaper-live-canvas"></canvas>
+            <div class="wallpaper-live-center">
+                <div class="wallpaper-live-remaining" id="wallpaper-live-remaining">—</div>
+                <div class="wallpaper-live-label">осталось задач</div>
+                <div class="wallpaper-live-sub" id="wallpaper-live-sub">—</div>
+            </div>
+        </div>
+
+        <div class="wallpaper-live-list" id="wallpaper-live-list"></div>
+
+        <div class="wallpaper-cols">
+            <div class="wallpaper-col">
+                <h4>iPhone (Команды)</h4>
+                <ol>
+                    <li>Открой “Команды” → “Автоматизация” → “Время суток” (например 07:00 ежедневно).</li>
+                    <li>Добавь действие “Получить содержимое URL” и вставь URL из поля выше.</li>
+                    <li>Добавь действие “Установить обои” (экран блокировки или оба).</li>
+                    <li>Выключи “Спрашивать перед запуском”.</li>
+                    <li>Обновление каждые 5–10 минут на iOS системно не гарантируется. Реалистично — несколько обновлений в день (утро/день/вечер) или обновление по триггерам (например при открытии/закрытии режима фокусировки).</li>
+                    <li>Быстрый запуск без таймера: Настройки → Универсальный доступ → Касание → “Касание задней панели” → выбрать команду (двойной/тройной тап).</li>
+                    <li>Если есть Action Button: Настройки → Action Button → “Shortcut” → выбрать команду.</li>
+                    <li>Комбинации аппаратных кнопок (громкость + и - и т.п.) привязать нельзя.</li>
+                </ol>
+            </div>
+            <div class="wallpaper-col">
+                <h4>Android (Tasker/Automate)</h4>
+                <ol>
+                    <li>Сделай триггер по времени (например каждые 5–10 минут).</li>
+                    <li>HTTP GET по URL из поля выше → сохранить в файл (wallpaper.png).</li>
+                    <li>Действие “Set Wallpaper” → lock/home.</li>
+                    <li>Триггер на “блокировку”: в Tasker обычно это Event → Display → Display Off (или Screen Off) → дальше те же шаги.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="wallpaper-hint">
+            Токен в URL живёт ~30 дней. Если сервер недоступен с телефона — нужен домен/туннель/VPN.
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+    let cropper = null;
+    let lastWallpaperUrl = null;
+
+    // 1. Load Profile Data
+    async function loadProfile() {
+        try {
+            const user = await request({ url: '/user/profile/', method: 'GET' });
+            if (user) {
+                document.getElementById('profile-username').textContent = user.username;
+                document.getElementById('profile-email').textContent = user.email || 'Не указан';
+                document.getElementById('profile-fullname').textContent = 
+                    [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Не указано';
+                
+                if (user.avatar) {
+                    document.getElementById('avatar-preview').style.backgroundImage = `url('${user.avatar}')`;
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load profile', e);
+        }
+    }
+
+    loadProfile();
+
+    const wallpaperModal = document.getElementById('wallpaper-modal');
+    const wallpaperUrlEl = document.getElementById('wallpaper-url');
+    const wallpaperCanvas = document.getElementById('wallpaper-live-canvas');
+    const wallpaperRemainingEl = document.getElementById('wallpaper-live-remaining');
+    const wallpaperSubEl = document.getElementById('wallpaper-live-sub');
+    const wallpaperListEl = document.getElementById('wallpaper-live-list');
+    let wallpaperRaf = null;
+    let wallpaperParticles = [];
+    let wallpaperData = null;
+
+    function calcWallpaperSize() {
+        const sw = Math.max(window.screen.width, window.screen.height);
+        const sh = Math.min(window.screen.width, window.screen.height);
+        const dpr = window.devicePixelRatio || 1;
+        const w = Math.round(sh * dpr);
+        const h = Math.round(sw * dpr);
+        return { w, h };
+    }
+
+    function formatTimeFromTs(ts) {
+        const d = new Date(ts * 1000);
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function clearNode(node) {
+        if (!node) return;
+        node.innerHTML = '';
+    }
+
+    function renderWallpaperList(data) {
+        if (!wallpaperListEl) return;
+        clearNode(wallpaperListEl);
+
+        const timed = Array.isArray(data.timed) ? data.timed : [];
+        const deadlines = Array.isArray(data.deadlines) ? data.deadlines : [];
+
+        const items = [];
+        timed.forEach((t) => {
+            items.push({
+                title: t.title,
+                dueTs: t.end_ts,
+                color: t.status_color,
+            });
+        });
+        deadlines.forEach((t) => {
+            items.push({
+                title: t.title,
+                dueTs: t.deadline_ts,
+                color: t.status_color,
+            });
+        });
+
+        items.sort((a, b) => {
+            if (a.dueTs !== b.dueTs) return (a.dueTs || 0) - (b.dueTs || 0);
+            return String(a.title || '').localeCompare(String(b.title || ''), 'ru');
+        });
+
+        const max = 10;
+        const slice = items.slice(0, max);
+        if (!slice.length) {
+            const empty = document.createElement('div');
+            empty.style.color = 'var(--text-secondary)';
+            empty.style.fontSize = 'var(--text-sm)';
+            empty.textContent = 'На сегодня задач нет';
+            wallpaperListEl.appendChild(empty);
+            return;
+        }
+
+        slice.forEach((it) => {
+            const row = document.createElement('div');
+            row.className = 'wallpaper-live-item';
+
+            const dot = document.createElement('div');
+            dot.className = 'wallpaper-live-dot';
+            if (it.color) dot.style.background = it.color;
+
+            const title = document.createElement('div');
+            title.className = 'wallpaper-live-title';
+            title.textContent = it.title || '—';
+
+            const due = document.createElement('div');
+            due.className = 'wallpaper-live-due';
+            due.textContent = it.dueTs ? formatTimeFromTs(it.dueTs) : '';
+
+            row.appendChild(dot);
+            row.appendChild(title);
+            row.appendChild(due);
+            wallpaperListEl.appendChild(row);
+        });
+    }
+
+    function initParticles(w, h) {
+        const count = Math.round(Math.max(120, Math.min(220, (w * h) / 7000)));
+        const cx = w / 2;
+        const cy = h / 2;
+        const r = Math.min(w, h) * 0.32;
+
+        wallpaperParticles = Array.from({ length: count }).map(() => {
+            const a = Math.random() * Math.PI * 2;
+            const rr = r + (Math.random() - 0.5) * (r * 0.18);
+            return {
+                a,
+                rr,
+                s: 1.2 + Math.random() * 2.6,
+                v: (Math.random() - 0.5) * 0.004,
+                p: Math.random(),
+                alpha: 0.18 + Math.random() * 0.35,
+            };
+        });
+
+        return { cx, cy, r };
+    }
+
+    function stopWallpaperAnim() {
+        if (wallpaperRaf) cancelAnimationFrame(wallpaperRaf);
+        wallpaperRaf = null;
+    }
+
+    function startWallpaperAnim() {
+        if (!wallpaperCanvas) return;
+        stopWallpaperAnim();
+
+        const ctx = wallpaperCanvas.getContext('2d');
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const rect = wallpaperCanvas.getBoundingClientRect();
+        const w = Math.max(1, Math.floor(rect.width));
+        const h = Math.max(1, Math.floor(rect.height));
+        wallpaperCanvas.width = w * dpr;
+        wallpaperCanvas.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const colors = getComputedStyle(document.documentElement);
+        const bg = (colors.getPropertyValue('--bg-app') || '#0b0f17').trim();
+        const grid = (colors.getPropertyValue('--border-subtle') || 'rgba(255,255,255,0.12)').trim();
+        const accent = (colors.getPropertyValue('--accent-primary') || '#6c5ce7').trim();
+
+        const { cx, cy, r } = initParticles(w, h);
+        const ringW = Math.max(10, Math.floor(r * 0.12));
+
+        const drawFrame = () => {
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.strokeStyle = grid;
+            ctx.lineWidth = ringW;
+            ctx.stroke();
+
+            const total = wallpaperData && wallpaperData.summary ? wallpaperData.summary.total : 0;
+            const completed = wallpaperData && wallpaperData.summary ? wallpaperData.summary.completed : 0;
+            const pct = total > 0 ? Math.max(0, Math.min(1, completed / total)) : 0;
+            if (pct > 0) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
+                ctx.strokeStyle = accent;
+                ctx.lineWidth = ringW;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+
+            wallpaperParticles.forEach((p) => {
+                p.a += p.v;
+                p.p += 0.008;
+                const jitter = (Math.sin(p.p) * 0.5 + 0.5) * (ringW * 1.15) - (ringW * 0.55);
+                const rr = p.rr + jitter;
+                const x = cx + rr * Math.cos(p.a);
+                const y = cy + rr * Math.sin(p.a);
+                ctx.beginPath();
+                ctx.arc(x, y, p.s, 0, Math.PI * 2);
+                ctx.fillStyle = Math.random() < 0.02 ? accent : grid;
+                ctx.globalAlpha = p.alpha;
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            wallpaperRaf = requestAnimationFrame(drawFrame);
+        };
+
+        drawFrame();
+    }
+
+    async function openWallpaperGuide() {
+        if (!wallpaperModal) return;
+        wallpaperModal.style.display = 'block';
+
+        if (wallpaperUrlEl) wallpaperUrlEl.value = 'Загрузка...';
+        if (wallpaperRemainingEl) wallpaperRemainingEl.textContent = '—';
+        if (wallpaperSubEl) wallpaperSubEl.textContent = '—';
+        clearNode(wallpaperListEl);
+
+        try {
+            const tokenResp = await request({ url: '/user/wallpaper/token/', method: 'GET' });
+            const token = tokenResp && tokenResp.token ? tokenResp.token : null;
+            if (!token) {
+                if (wallpaperUrlEl) wallpaperUrlEl.value = 'Не удалось получить токен';
+                return;
+            }
+
+            const { w, h } = calcWallpaperSize();
+            const base = window.location.origin;
+            const url = `${base}/task/wallpaper/today.png?token=${encodeURIComponent(token)}&w=${w}&h=${h}&t=${Date.now()}`;
+            lastWallpaperUrl = url;
+            if (wallpaperUrlEl) wallpaperUrlEl.value = url;
+
+            wallpaperData = await request({ url: '/task/today/', method: 'GET' });
+            if (wallpaperData) {
+                const timed = Array.isArray(wallpaperData.timed) ? wallpaperData.timed : [];
+                const deadlines = Array.isArray(wallpaperData.deadlines) ? wallpaperData.deadlines : [];
+                const total = timed.length + deadlines.length;
+                const completed =
+                    timed.filter((t) => t && t.status_type === 'completed').length
+                    + deadlines.filter((t) => t && t.status_type === 'completed').length;
+                const remaining = Math.max(0, total - completed);
+
+                wallpaperData.summary = { total, completed };
+
+                if (wallpaperRemainingEl) wallpaperRemainingEl.textContent = String(remaining);
+                if (wallpaperSubEl) wallpaperSubEl.textContent = `${completed}/${total}`;
+                renderWallpaperList(wallpaperData);
+            }
+
+            startWallpaperAnim();
+        } catch (e) {
+            console.error(e);
+            if (wallpaperUrlEl) wallpaperUrlEl.value = 'Ошибка при получении URL';
+        }
+    }
+
+    function closeWallpaperGuide() {
+        if (!wallpaperModal) return;
+        wallpaperModal.style.display = 'none';
+        stopWallpaperAnim();
+    }
+
+    async function copyWallpaperUrl() {
+        const url = (wallpaperUrlEl && wallpaperUrlEl.value && wallpaperUrlEl.value !== '—') ? wallpaperUrlEl.value : lastWallpaperUrl;
+        if (!url) return;
+
+        try {
+            await navigator.clipboard.writeText(url);
+        } catch (e) {
+            try {
+                wallpaperUrlEl.focus();
+                wallpaperUrlEl.select();
+                document.execCommand('copy');
+            } catch (e2) {}
+        }
+    }
+
+    if (wallpaperModal) {
+        wallpaperModal.addEventListener('click', (e) => {
+            if (e.target === wallpaperModal) closeWallpaperGuide();
+        });
+    }
+
+    // 2. Avatar Selection & Cropping
+    const avatarInput = document.getElementById('avatar-input');
+    const cropperModal = document.getElementById('cropper-modal');
+    const cropperImage = document.getElementById('cropper-image');
+
+    avatarInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            cropperImage.src = evt.target.result;
+            openCropper();
+        };
+        reader.readAsDataURL(file);
+        
+        // Reset input so same file can be selected again
+        this.value = null;
+    });
+
+    function openCropper() {
+        cropperModal.style.display = 'flex';
+        if (cropper) cropper.destroy();
+        
+        cropper = new Cropper(cropperImage, {
+            aspectRatio: 1, // Square crop for avatar
+            viewMode: 1,
+            autoCropArea: 0.8,
+        });
+    }
+
+    function closeCropper() {
+        cropperModal.style.display = 'none';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    function cropAndUpload() {
+        if (!cropper) return;
+
+        cropper.getCroppedCanvas({
+            width: 400,
+            height: 400,
+            fillColor: '#fff',
+        }).toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('avatar', blob, 'avatar.png');
+
+            // Show loading state?
+            const saveBtn = document.querySelector('#cropper-modal .btn-primary');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Загрузка...';
+            saveBtn.disabled = true;
+
+            try {
+                // Use fetch directly because request() wrapper might assume JSON
+                // But let's see if we can use our request wrapper.
+                // Our request wrapper sets Content-Type: application/json by default.
+                // For FormData, we need to let browser set Content-Type (with boundary).
+                // So we'll use raw fetch with same headers auth logic.
+                
+                // Hack: Using the CSRF token from cookie
+                const getCookie = (name) => {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                };
+
+                const response = await fetch('/user/profile/avatar/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('avatar-preview').style.backgroundImage = `url('${data.avatar}')`;
+                    
+                    // Update global sidebar avatar
+                    const sidebarImg = document.querySelector('.left_panel .image');
+                    if (sidebarImg) {
+                        sidebarImg.style.backgroundImage = `url('${data.avatar}')`;
+                    }
+                    
+                    closeCropper();
+                } else {
+                    alert('Ошибка загрузки фото');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка соединения');
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }, 'image/png');
+    }
+
+    // 3. Password Change
+    async function changePassword() {
+        const oldP = document.getElementById('old-password').value;
+        const newP = document.getElementById('new-password').value;
+        const confP = document.getElementById('confirm-password').value;
+
+        if (!oldP || !newP || !confP) {
+            alert('Заполните все поля');
+            return;
+        }
+
+        if (newP !== confP) {
+            alert('Пароли не совпадают');
+            return;
+        }
+
+        try {
+            await request({
+                url: '/user/profile/password/',
+                method: 'POST',
+                body: {
+                    old_password: oldP,
+                    new_password: newP,
+                    confirm_password: confP
+                }
+            });
+            alert('Пароль успешно изменен');
+            document.getElementById('old-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        } catch (e) {
+            console.error(e);
+            alert('Ошибка при смене пароля: ' + (e.detail || 'Неизвестная ошибка'));
+        }
+    }
+</script>
+{% endblock %}

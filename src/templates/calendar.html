@@ -1,0 +1,61 @@
+{% extends 'index.html' %}
+
+{% block links_block %}
+    <link rel="stylesheet" href="../static/first_app/css/calendar.css">
+{% endblock %}
+
+{% block scripts_block %}
+    <script src="../static/first_app/js/calendar.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="calendar-section">
+            <div class="calendar-main-block glass-block">
+                <div class="waiter"></div>
+                <div class="search-filter-block"></div>
+                <div class="calendar-week-toolbar">
+                    <button type="button" class="calendar-week-btn glass-block" id="calendar-prev-week">‹</button>
+                    <div class="calendar-week-label" id="calendar-week-label"></div>
+                    <button type="button" class="calendar-week-btn glass-block" id="calendar-next-week">›</button>
+                </div>
+                <div class="calendar-block">
+                    <div class="calendar--times">
+                        <div class="calendar--days" id="calendar-days"></div>
+                        
+                        <div class="calendar-scroll-content">
+                            <div class="calendar--times-rows">
+                                <div class="calendar--row"><h6>00:00</h6></div>
+                                <div class="calendar--row"><h6>01:00</h6></div>
+                            <div class="calendar--row"><h6>02:00</h6></div>
+                            <div class="calendar--row"><h6>03:00</h6></div>
+                            <div class="calendar--row"><h6>04:00</h6></div>
+                            <div class="calendar--row"><h6>05:00</h6></div>
+                            <div class="calendar--row"><h6>06:00</h6></div>
+                            <div class="calendar--row"><h6>07:00</h6></div>
+                            <div class="calendar--row"><h6>08:00</h6></div>
+                            <div class="calendar--row"><h6>09:00</h6></div>
+                            <div class="calendar--row"><h6>10:00</h6></div>
+                            <div class="calendar--row"><h6>11:00</h6></div>
+                            <div class="calendar--row"><h6>12:00</h6></div>
+                            <div class="calendar--row"><h6>13:00</h6></div>
+                            <div class="calendar--row"><h6>14:00</h6></div>
+                            <div class="calendar--row"><h6>15:00</h6></div>
+                            <div class="calendar--row"><h6>16:00</h6></div>
+                            <div class="calendar--row"><h6>17:00</h6></div>
+                            <div class="calendar--row"><h6>18:00</h6></div>
+                            <div class="calendar--row"><h6>19:00</h6></div>
+                            <div class="calendar--row"><h6>20:00</h6></div>
+                            <div class="calendar--row"><h6>21:00</h6></div>
+                            <div class="calendar--row"><h6>22:00</h6></div>
+                            <div class="calendar--row"><h6>23:00</h6></div>
+                            </div>
+                            <div class="calendar--times-columns" id="calendar-times-columns">
+                                <div class="time-column"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+</div>
+{% endblock %}

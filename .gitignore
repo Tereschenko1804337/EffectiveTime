@@ -3,6 +3,7 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+/.idea
 # C extensions
 *.so
 
@@ -205,3 +206,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+/src/deploy/
+/src/docker/
+/src/.dockerignore
+/src/ai-test.py
+/src/compose.yaml
+/src/DEPLOY_UBUNTU_24_04.md
+/src/Dockerfile
+/src/requirements.txt

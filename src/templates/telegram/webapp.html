@@ -1,0 +1,70 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{% static 'first_app/css/common.css' %}">
+    <link rel="stylesheet" href="{% static 'first_app/css/index.css' %}">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;">
+        <div class="glass-block" style="max-width: 520px; width: 100%; padding: 24px; display: grid; gap: 12px;">
+            <div style="font-size: 20px; font-weight: 800;">Открываю EffiTime…</div>
+            <div style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                Если авторизация не завершилась — обнови страницу или переоткрой WebApp.
+            </div>
+            <div id="tg-webapp-status" style="color: var(--text-tertiary); font-size: 12px;"></div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const statusEl = document.getElementById('tg-webapp-status');
+            const setStatus = (t) => { if (statusEl) statusEl.textContent = t || ''; };
+
+            const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+            if (!tg) {
+                setStatus('Telegram WebApp API недоступен');
+                return;
+            }
+
+            try {
+                tg.ready();
+                tg.expand();
+            } catch (e) {}
+
+            const initData = tg.initData || '';
+            if (!initData) {
+                setStatus('initData пустой');
+                return;
+            }
+
+            setStatus('Авторизация…');
+
+            fetch('/tg/login/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initData }),
+            })
+                .then(async (r) => {
+                    if (r.status === 409) {
+                        window.location.replace('/tg/bind/');
+                        return null;
+                    }
+                    if (!r.ok) throw new Error(String(r.status));
+                    return r.json().catch(() => ({}));
+                })
+                .then((data) => {
+                    if (data === null) return;
+                    window.location.replace('/today/');
+                })
+                .catch(() => {
+                    setStatus('Не удалось авторизоваться');
+                });
+        })();
+    </script>
+</body>
+</html>

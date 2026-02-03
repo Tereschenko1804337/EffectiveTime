@@ -1,0 +1,140 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{% static 'first_app/css/common.css' %}">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-app);
+            padding: 24px;
+        }
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+            box-shadow: var(--shadow-lg);
+            display: grid;
+            gap: var(--space-16);
+        }
+        .title {
+            font-size: var(--text-lg);
+            font-weight: 800;
+        }
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: var(--text-sm);
+            line-height: 1.6;
+        }
+        .field label {
+            display: block;
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-4);
+            font-weight: 600;
+        }
+        .field input {
+            width: 100%;
+            padding: var(--space-12);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-app);
+            color: var(--text-primary);
+        }
+        .alert {
+            background-color: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            color: var(--accent-danger);
+            padding: var(--space-12);
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            display: none;
+        }
+        .alert.show { display: block; }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="card">
+        <div>
+            <div class="title">Привязать Telegram</div>
+            <div class="subtitle">
+                Введите логин и пароль от существующего аккаунта EffiTime. Мы запишем tg_id, и дальше вход будет автоматическим.
+            </div>
+        </div>
+
+        <div class="alert" id="alert"></div>
+
+        <div class="field">
+            <label for="username">Логин</label>
+            <input id="username" autocomplete="username" placeholder="username">
+        </div>
+        <div class="field">
+            <label for="password">Пароль</label>
+            <input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+
+        <button class="btn btn-primary" id="submit" type="button" style="width: 100%;">Войти и привязать</button>
+    </div>
+
+    <script>
+        (function () {
+            const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+            try { if (tg) { tg.ready(); tg.expand(); } } catch (e) {}
+
+            const btn = document.getElementById('submit');
+            const alertBox = document.getElementById('alert');
+            const userEl = document.getElementById('username');
+            const passEl = document.getElementById('password');
+
+            function showError(text) {
+                alertBox.textContent = text;
+                alertBox.classList.add('show');
+            }
+
+            function setLoading(v) {
+                btn.disabled = v;
+                btn.textContent = v ? 'Вход…' : 'Войти и привязать';
+            }
+
+            btn.addEventListener('click', async () => {
+                const username = (userEl.value || '').trim();
+                const password = passEl.value || '';
+                if (!username || !password) {
+                    showError('Заполните логин и пароль.');
+                    return;
+                }
+
+                alertBox.classList.remove('show');
+                setLoading(true);
+                try {
+                    const res = await fetch('/tg/bind/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password }),
+                    });
+                    if (res.ok) {
+                        window.location.replace('/today/');
+                        return;
+                    }
+                    const data = await res.json().catch(() => ({}));
+                    showError(data.detail || 'Не удалось выполнить вход.');
+                } catch (e) {
+                    showError('Ошибка сети.');
+                } finally {
+                    setLoading(false);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
+

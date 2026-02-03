@@ -1,0 +1,196 @@
+@import url('../../common/css/variables.css');
+
+/* --- Dashboard Grid (Categories) --- */
+.right_panel {
+    padding: var(--space-32);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-24);
+    align-content: start;
+    overflow-y: auto;
+    width: 100%;
+    height: 100%;
+}
+
+.block {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--ease-default);
+    position: relative;
+    overflow: hidden;
+}
+
+.block:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    background-color: var(--bg-element);
+}
+
+.button_text {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    z-index: 2;
+}
+
+/* Add Category Button */
+#add-category-btn {
+    border-style: dashed;
+    background-color: transparent;
+    border-color: var(--border-active);
+}
+
+#add-category-btn:hover {
+    border-color: var(--accent-primary);
+    background-color: rgba(88, 166, 255, 0.05);
+}
+
+#add-category-btn h2 {
+    font-size: 48px;
+    font-weight: 200;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+#add-category-btn:hover h2 {
+    color: var(--accent-primary);
+}
+
+/* --- Sleep Settings Modal --- */
+.sleep-settings-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.sleep-settings-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-24);
+    width: 100%;
+    max-width: 400px;
+}
+
+.sleep-settings-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    margin-bottom: var(--space-24);
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.sleep-settings-row {
+    margin-bottom: var(--space-16);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sleep-settings-label {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+.sleep-settings-time {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+}
+
+.sleep-time-select {
+    width: 70px;
+    text-align: center;
+    background-color: var(--bg-element);
+    border-color: var(--border-subtle);
+}
+
+.sleep-settings-actions {
+    margin-top: var(--space-24);
+    display: flex;
+    gap: var(--space-12);
+}
+
+.sleep-settings-actions button {
+    flex: 1;
+}
+
+/* --- Create Category Modal --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: none; /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-24);
+    width: 100%;
+    max-width: 360px;
+}
+
+.modal-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-16);
+    text-align: center;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: var(--space-12);
+    margin-top: var(--space-24);
+}
+
+.modal-btn {
+    flex: 1;
+    justify-content: center;
+}
+
+.save-btn {
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
+    border: none;
+}
+
+.save-btn:hover {
+    background-color: var(--accent-primary-hover);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .right_panel {
+        padding: var(--space-16);
+        grid-template-columns: 1fr;
+    }
+    
+    .block {
+        height: 120px;
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 0 var(--space-24);
+    }
+
+    #add-category-btn {
+        justify-content: center;
+    }
+}

@@ -1,0 +1,66 @@
+{% extends 'index.html' %}
+
+{% block links_block %}
+    <link rel="stylesheet" href="../static/first_app/css/today.css">
+{% endblock %}
+
+{% block scripts_block %}
+    <script src="../static/first_app/js/today.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="today2">
+        <div class="today2-panel glass-block">
+            <div class="today2-top">
+                <div class="today2-top-left">
+                    <div class="today2-title">Сегодня</div>
+                    <div class="today2-subtitle" id="today-date-label">—</div>
+                </div>
+                <div class="today2-top-right">
+                    <button type="button" class="btn" id="today-refresh-btn">Обновить</button>
+                    <button type="button" class="btn btn-primary" id="today-create-btn">Создать задачу</button>
+                </div>
+            </div>
+
+            <div class="today2-cards">
+                <div class="today2-card">
+                    <div class="today2-card-label">Осталось</div>
+                    <div class="today2-card-value" id="today-remaining">—</div>
+                    <div class="today2-card-sub" id="today-remaining-sub">—</div>
+                </div>
+                <div class="today2-card">
+                    <div class="today2-card-label">Запланировано</div>
+                    <div class="today2-card-value" id="today-scheduled-count">—</div>
+                    <div class="today2-card-sub">задач со временем</div>
+                </div>
+                <div class="today2-card">
+                    <div class="today2-card-label">Дедлайны</div>
+                    <div class="today2-card-value" id="today-deadlines-count">—</div>
+                    <div class="today2-card-sub">задач до конца дня</div>
+                </div>
+            </div>
+
+            <div class="today2-progress">
+                <div class="today2-progress-bar">
+                    <div class="today2-progress-fill" id="today-progress-fill"></div>
+                </div>
+                <div class="today2-progress-meta" id="today-progress-stats">—</div>
+            </div>
+
+            <div class="today2-block">
+                <div class="today2-block-title">План на сегодня</div>
+                <div class="today2-block-hint">Список отсортирован по времени. Нажми на задачу, чтобы открыть.</div>
+                <div class="today2-agenda" id="today-agenda"></div>
+            </div>
+
+            <div class="today2-block">
+                <div class="today2-block-title today2-collapsible" id="today-inbox-toggle">
+                    <span>Без времени</span>
+                    <span class="today2-pill" id="today-inbox-count">—</span>
+                </div>
+                <div class="today2-block-hint">Это задачи без слота и без дедлайна на сегодня.</div>
+                <div class="today2-agenda today2-inbox hide" id="today-inbox"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

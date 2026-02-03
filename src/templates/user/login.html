@@ -1,0 +1,265 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title|default:"Вход" }}</title>
+  <link rel="stylesheet" href="{% static 'first_app/css/common.css' %}">
+  <style>
+      body {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: var(--bg-app);
+      }
+      .auth-card {
+          width: 100%;
+          max-width: 400px;
+          background-color: var(--bg-surface);
+          border: 1px solid var(--border-subtle);
+          border-radius: var(--radius-lg);
+          padding: var(--space-32);
+          box-shadow: var(--shadow-lg);
+      }
+      .brand {
+          display: flex;
+          align-items: center;
+          gap: var(--space-12);
+          margin-bottom: var(--space-24);
+          justify-content: center;
+      }
+      .logo {
+          width: 40px;
+          height: 40px;
+          border-radius: var(--radius-md);
+          background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
+      }
+      h1 {
+          font-size: var(--text-lg);
+          font-weight: 600;
+          color: var(--text-primary);
+      }
+      .subtitle {
+          color: var(--text-secondary);
+          font-size: var(--text-sm);
+          text-align: center;
+          margin-bottom: var(--space-24);
+      }
+      .field {
+          margin-bottom: var(--space-16);
+      }
+      label {
+          display: block;
+          font-size: var(--text-xs);
+          color: var(--text-secondary);
+          margin-bottom: var(--space-4);
+          font-weight: 500;
+      }
+      .alert {
+          background-color: rgba(248, 81, 73, 0.1);
+          border: 1px solid rgba(248, 81, 73, 0.4);
+          color: var(--accent-danger);
+          padding: var(--space-12);
+          border-radius: var(--radius-md);
+          font-size: var(--text-sm);
+          margin-bottom: var(--space-16);
+          display: none;
+      }
+      .alert.show { display: block; }
+      .link-row {
+          margin-top: var(--space-24);
+          text-align: center;
+          font-size: var(--text-sm);
+          color: var(--text-secondary);
+      }
+      .link-row a {
+          color: var(--accent-primary);
+          text-decoration: none;
+      }
+      .link-row a:hover {
+          text-decoration: underline;
+      }
+      .social-auth {
+          margin-top: var(--space-24);
+      }
+      .divider {
+          display: flex;
+          align-items: center;
+          text-align: center;
+          color: var(--text-secondary);
+          font-size: var(--text-sm);
+          margin-bottom: var(--space-16);
+      }
+      .divider::before,
+      .divider::after {
+          content: '';
+          flex: 1;
+          border-bottom: 1px solid var(--border-subtle);
+      }
+      .divider span {
+          padding: 0 var(--space-12);
+      }
+      .social-buttons {
+          display: flex;
+          gap: var(--space-12);
+          flex-direction: column;
+      }
+      .btn-social {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: var(--space-12);
+          width: 100%;
+          padding: var(--space-12);
+          border-radius: var(--radius-md);
+          font-weight: 500;
+          text-decoration: none;
+          transition: background-color 0.2s;
+          border: 1px solid var(--border-subtle);
+          background-color: var(--bg-surface);
+          color: var(--text-primary);
+      }
+      .btn-social:hover {
+          background-color: var(--bg-app);
+          text-decoration: none;
+      }
+      .btn-vk {
+          background-color: #0077FF;
+          color: white;
+          border-color: #0077FF;
+      }
+      .btn-vk:hover {
+          background-color: #0066DD;
+      }
+      .btn-google {
+          background-color: white;
+          color: #3c4043;
+      }
+      .btn-google:hover {
+          background-color: #f8f9fa;
+      }
+  </style>
+</head>
+<body>
+
+  <div class="auth-card" id="card">
+      <div class="brand">
+          <div class="logo"></div>
+          <h1>Time Shape</h1>
+      </div>
+      
+      <p class="subtitle">Войдите в свой аккаунт</p>
+
+      <div class="alert" id="alert"></div>
+
+      <form id="loginForm" novalidate>
+          {% csrf_token %}
+          <div class="field">
+              <label for="username">Имя пользователя</label>
+              <input id="username" type="text" autocomplete="username" required placeholder="username">
+          </div>
+          <div class="field">
+              <label for="password">Пароль</label>
+              <input id="password" type="password" autocomplete="current-password" required placeholder="••••••••">
+          </div>
+          <button class="btn btn-primary" id="submitBtn" type="button" style="width: 100%;">Войти</button>
+      </form>
+
+      <div class="social-auth">
+          <div class="divider">
+              <span>или через</span>
+          </div>
+          <div class="social-buttons">
+              {% if False %}
+              <a href="{% url 'social:begin' 'vk-oauth2' %}" class="btn btn-social btn-vk">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M15.0729 13.5793C15.8286 14.3431 16.5986 15.0931 17.3314 15.8821C17.6357 16.2086 17.9314 16.5457 18.2143 16.8921C18.6643 17.4621 18.4971 18.0686 17.7686 18.1136C16.8943 18.1693 16.0243 18.1436 15.15 18.1179C14.34 18.1093 13.7871 17.6786 13.3886 17.0014C12.7243 15.8529 12.0643 14.7043 11.3914 13.5643C11.1943 13.2214 10.9886 13.1229 10.6329 13.3414C10.6157 13.6886 10.6157 14.0314 10.6157 14.3786C10.6157 15.5357 10.6157 16.6929 10.6157 17.85C10.6157 17.97 10.59 18.0857 10.4571 18.1157C10.1914 18.1757 9.92143 18.15 9.65143 18.12C7.30286 17.8629 5.37857 16.7143 3.90429 14.82C2.42143 12.9129 1.45714 10.7486 0.771429 8.45143C0.685714 8.16 0.814286 8.01 1.11857 8.00571C2.35286 7.99286 3.58714 7.99714 4.82143 8.00143C5.23286 8.00143 5.49857 8.21571 5.65714 8.59714C6.27857 10.1014 7.15286 11.4557 8.35714 12.5957C8.61429 12.8357 8.81571 12.7929 8.97429 12.4971C9.04714 12.36 9.07714 12.1971 9.07714 12.0429C9.07714 10.6329 9.07714 9.22286 9.07714 7.81286C9.07714 7.37571 8.94429 7.07143 8.51571 6.95571C8.36143 6.91286 8.21571 6.84857 8.06143 6.78429C7.81714 6.68143 7.80857 6.55286 7.98857 6.36C8.25857 6.07286 8.63143 5.92286 9.02571 5.88857C9.93857 5.81143 10.8514 5.82 11.76 5.87143C12.2143 5.9 12.3814 6.11571 12.42 6.56143C12.4586 7.01143 12.4371 7.46571 12.4457 7.91571C12.45 8.19857 12.5529 8.30571 12.8443 8.25857C13.0457 8.22857 13.2429 8.13 13.4143 8.01857C14.2414 7.47 14.88 6.75429 15.3857 5.91857C15.6257 5.51571 15.8271 5.09143 16.0371 4.67143C16.1829 4.38429 16.3586 4.30286 16.6714 4.30714C17.5843 4.31571 18.4971 4.31571 19.41 4.30714C19.86 4.30286 20.0829 4.47429 19.9543 4.90714C19.7486 5.60143 19.3414 6.18 18.8486 6.70286C18.1714 7.42286 17.46 8.11286 16.7486 8.80286C16.3929 9.14571 16.3757 9.32143 16.7657 9.68571C17.6957 10.5514 18.6386 11.4043 19.5257 12.3086C20.07 12.8614 20.1043 12.9214 19.89 13.65C19.7914 13.9843 19.74 14.3357 19.6457 14.67C19.5386 15.06 19.4314 15.45 19.3243 15.84C19.23 16.1914 19.0414 16.29 18.6814 16.29C17.7857 16.29 16.89 16.29 15.9943 16.29C15.66 16.2943 15.4243 16.1229 15.2271 15.8614L15.0729 13.5793Z" fill="white"/>
+                  </svg>
+                  ВКонтакте
+              </a>
+              {% endif %}
+              <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-social btn-google">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M23.52 12.2727C23.52 11.4227 23.4436 10.6091 23.3073 9.81818H12V14.46H18.4582C18.18 15.96 17.3345 17.2309 16.0636 18.0818V21.0927H19.9418C22.2109 19.0036 23.52 15.9273 23.52 12.2727Z" fill="#4285F4"/>
+                      <path d="M12 24C15.24 24 17.9564 22.9255 19.9418 21.0927L16.0636 18.0818C14.9891 18.8018 13.6145 19.2273 12 19.2273C8.87455 19.2273 6.22909 17.1164 5.28545 14.2855H1.27637V17.3945C3.24545 21.3055 7.30909 24 12 24Z" fill="#34A853"/>
+                      <path d="M5.28545 14.2855C5.04545 13.5655 4.90909 12.7964 4.90909 12C4.90909 11.2036 5.04545 10.4345 5.28545 9.71455V6.60547H1.27637C0.463636 8.22547 0 10.0636 0 12C0 13.9364 0.463636 15.7745 1.27637 17.3945L5.28545 14.2855Z" fill="#FBBC05"/>
+                      <path d="M12 4.77273C13.7618 4.77273 15.3327 5.37818 16.5764 6.56727L20.0127 3.13091C17.9509 1.21091 15.2345 0 12 0C7.30909 0 3.24545 2.69455 1.27637 6.60547L5.28545 9.71455C6.22909 6.88364 8.87455 4.77273 12 4.77273Z" fill="#EA4335"/>
+                  </svg>
+                  Google
+              </a>
+          </div>
+      </div>
+
+
+      <div class="link-row">
+          Нет аккаунта? <a href="/register/">Регистрация</a>
+      </div>
+  </div>
+
+  <script>
+  (function () {
+    const btn = document.getElementById('submitBtn');
+    const alertBox = document.getElementById('alert');
+    const user = document.getElementById('username');
+    const pwd = document.getElementById('password');
+
+    function showError(text) {
+      alertBox.textContent = text;
+      alertBox.classList.add('show');
+    }
+
+    function setLoading(v) {
+      btn.disabled = v;
+      btn.textContent = v ? 'Вход...' : 'Войти';
+    }
+
+    function getCookie(name) {
+      const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+
+    btn.addEventListener('click', async () => {
+      const username = user.value.trim();
+      const password = pwd.value;
+
+      if (!username || !password) {
+        showError('Заполните все поля.');
+        return;
+      }
+
+      alertBox.classList.remove('show');
+      setLoading(true);
+
+      try {
+        const res = await fetch('/login/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (res.status === 204) {
+          window.location.href = '/';
+          return;
+        }
+
+        if (res.status === 400) {
+          const data = await res.json();
+          showError(data.detail || 'Ошибка авторизации.');
+          return;
+        }
+        showError('Неожиданный ответ сервера.');
+      } catch {
+        showError('Сервер недоступен.');
+      } finally {
+        setLoading(false);
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

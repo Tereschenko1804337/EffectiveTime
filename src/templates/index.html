@@ -1,0 +1,573 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{{ title }}</title>
+
+    <link rel="stylesheet" href="{% static 'first_app/css/common.css' %}">
+    <link rel="stylesheet" href="{% static 'first_app/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'quill/css/atom-one-dark.min.css' %}">
+    <link rel="stylesheet" href="{% static 'quill/css/quill.css' %}">
+    <link rel="stylesheet" href="{% static 'first_app/css/view_task.css' %}">
+
+    <script src="{% static 'common/js/request.js' %}"></script>
+    <script src="{% static 'quill/js/highlight.min.js' %}"></script>
+    <script src="{% static 'quill/js/quill.js' %}"></script>
+    <script src="{% static 'first_app/js/select.js' %}"></script>
+    <script src="{% static 'common/js/copy.js' %}"></script>
+
+    {% block links_block %}
+    {% endblock %}
+
+    {% block scripts_block %}
+    {% endblock %}
+</head>
+<body data-tg="{% if request.session.tg_webapp or request.COOKIES.tg_token %}1{% else %}0{% endif %}">
+    {% csrf_token %}
+    <section class="main_section">
+        <!-- Sidebar Navigation -->
+        <div class="left_panel">
+            <a href="/profile/" class="image-link" title="Личный кабинет">
+                <div class="image" id="sidebar-avatar"></div>
+            </a>
+
+            <div class="navigation">
+                <div class="navigation_button">
+                    <a href="/" class="{% if request.path == '/' %}active{% endif %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span>Сферы</span>
+                    </a>
+                </div>
+
+                <div class="navigation_button">
+                    <a href="/today/" class="{% if '/today/' in request.path %}active{% endif %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <path d="M12 7v6l3 2"></path>
+                        </svg>
+                        <span>Сегодня</span>
+                    </a>
+                </div>
+
+                <div class="navigation_button">
+                    <a href="/calendar/" class="{% if '/calendar/' in request.path %}active{% endif %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span>Календарь</span>
+                    </a>
+                </div>
+
+                <div class="navigation_button">
+                    <a href="/canban/" class="{% if '/canban/' in request.path %}active{% endif %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                        <span>Канбан</span>
+                    </a>
+                </div>
+
+                <div class="navigation_button">
+                    <button type="button" class="sleep-settings-btn" onclick="openSleepSettings()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span id="sleep-settings-nav-label">Сон</span>
+                    </button>
+                </div>
+
+                <div class="navigation_button">
+                    <a href="/task/analytics/" class="{% if '/task/analytics/' in request.path %}active{% endif %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                        <span>Аналитика</span>
+                    </a>
+                </div>
+                
+                <div style="flex: 1"></div> <!-- Spacer -->
+
+                <div class="navigation_button">
+                    <button type="button" onclick="toggleTheme()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                        </svg>
+                        <span>Тема</span>
+                    </button>
+                </div>
+
+                <div class="navigation_button">
+                    <a href="/logout/">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <span>Выйти</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        {% block content %}
+        {% endblock %}
+    </section>
+
+    <!-- Task View Modal Container -->
+    <section class="view_task_section" style="display: none;"></section>
+
+    <!-- Sleep Settings Modal -->
+    <section class="sleep-settings-overlay hide" id="sleep-settings-overlay">
+        <div class="sleep-settings-card">
+            <h3 class="sleep-settings-title">Настройки сна</h3>
+
+            <div class="sleep-settings-row">
+                <label class="sleep-settings-label">Подъем</label>
+                <div class="sleep-settings-time">
+                    <select id="sleep-wake-hour" class="sleep-time-select"></select>
+                    <span class="sleep-settings-time-sep">:</span>
+                    <select id="sleep-wake-minute" class="sleep-time-select"></select>
+                </div>
+            </div>
+
+            <div class="sleep-settings-row">
+                <label class="sleep-settings-label">Отбой</label>
+                <div class="sleep-settings-time">
+                    <select id="sleep-bed-hour" class="sleep-time-select"></select>
+                    <span class="sleep-settings-time-sep">:</span>
+                    <select id="sleep-bed-minute" class="sleep-time-select"></select>
+                </div>
+            </div>
+
+            <div class="sleep-settings-actions">
+                <button type="button" class="btn" onclick="saveSleepSettings()">Сохранить</button>
+                <button type="button" class="btn" onclick="closeSleepSettings()" style="background: transparent; border: 1px solid var(--border-subtle);">Отмена</button>
+            </div>
+
+            <div class="sleep-settings-hint" id="sleep-settings-hint" style="text-align: center; margin-top: 10px; font-size: 12px; color: var(--accent-danger);"></div>
+        </div>
+    </section>
+
+    <script type="text/javascript">
+        /* 
+         * Logic preserved from original file 
+         * Updated classes for new design system
+         */
+        async function open_task_by_id(task_id) {
+            const viewHtml = await request({
+                url: '/task/view/',
+                method: 'GET'
+            });
+
+            const viewSection = document.querySelector('.view_task_section');
+            viewSection.innerHTML = ''; 
+            
+            async function setHTMLWithScripts(container, html) {
+                container.innerHTML = html;
+                const scripts = Array.from(container.querySelectorAll("script"));
+                for (const oldScript of scripts) {
+                    const newScript = document.createElement("script");
+                    for (const attr of oldScript.attributes) {
+                        newScript.setAttribute(attr.name, attr.value);
+                    }
+                    if (oldScript.src) {
+                        await new Promise((resolve, reject) => {
+                            newScript.onload = resolve;
+                            newScript.onerror = reject;
+                            document.body.appendChild(newScript);
+                        });
+                    } else {
+                        newScript.textContent = oldScript.textContent;
+                        document.body.appendChild(newScript);
+                    }
+                    oldScript.remove();
+                }
+            }
+
+            await setHTMLWithScripts(viewSection, viewHtml);
+            viewSection.style.display = 'flex';
+
+            try {
+                const taskData = await request({
+                    url: `/task/${task_id}/view/`
+                });
+                
+                if (typeof populateTaskData === 'function') {
+                    populateTaskData(taskData);
+                } else {
+                    console.error('populateTaskData function not found');
+                }
+            } catch (error) {
+                console.error('Error fetching task data:', error);
+                alert('Ошибка при загрузке задачи');
+                viewSection.style.display = 'none';
+            }
+        }
+
+        async function open_task_edit_by_id(task_id) {
+            window.editTaskId = task_id;
+            window.initialTaskData = null;
+
+            const viewHtml = await request({
+                url: '/task/create/',
+                method: 'GET'
+            });
+
+            const viewSection = document.querySelector('.view_task_section');
+            viewSection.innerHTML = '';
+
+            async function setHTMLWithScripts(container, html) {
+                container.innerHTML = html;
+                const scripts = Array.from(container.querySelectorAll("script"));
+                for (const oldScript of scripts) {
+                    const newScript = document.createElement("script");
+                    for (const attr of oldScript.attributes) {
+                        newScript.setAttribute(attr.name, attr.value);
+                    }
+                    if (oldScript.src) {
+                        // Skip loading libraries that are already global if we can detect them,
+                        // OR rely on removing them from the partial templates (preferred).
+                        await new Promise((resolve, reject) => {
+                            newScript.onload = resolve;
+                            newScript.onerror = reject;
+                            document.body.appendChild(newScript);
+                        });
+                    } else {
+                        newScript.textContent = oldScript.textContent;
+                        document.body.appendChild(newScript);
+                    }
+                    oldScript.remove();
+                }
+            }
+
+            await setHTMLWithScripts(viewSection, viewHtml);
+            viewSection.style.display = 'flex';
+        }
+
+        async function open_create_task(initialData) {
+            window.editTaskId = null;
+            window.initialTaskData = initialData || null;
+
+            const viewHtml = await request({
+                url: '/task/create/',
+                method: 'GET'
+            });
+
+            const viewSection = document.querySelector('.view_task_section');
+            viewSection.innerHTML = '';
+
+            async function setHTMLWithScripts(container, html) {
+                container.innerHTML = html;
+                const scripts = Array.from(container.querySelectorAll("script"));
+                for (const oldScript of scripts) {
+                    const newScript = document.createElement("script");
+                    for (const attr of oldScript.attributes) {
+                        newScript.setAttribute(attr.name, attr.value);
+                    }
+                    if (oldScript.src) {
+                        await new Promise((resolve, reject) => {
+                            newScript.onload = resolve;
+                            newScript.onerror = reject;
+                            document.body.appendChild(newScript);
+                        });
+                    } else {
+                        newScript.textContent = oldScript.textContent;
+                        document.body.appendChild(newScript);
+                    }
+                    oldScript.remove();
+                }
+            }
+
+            await setHTMLWithScripts(viewSection, viewHtml);
+            viewSection.style.display = 'flex';
+        }
+
+        if (typeof window.toggleSubtaskCompleted !== 'function') {
+            window.toggleSubtaskCompleted = async function(taskId, subtaskId, checkboxEl) {
+                if (!taskId || !subtaskId || !checkboxEl) return;
+                const desired = !!checkboxEl.checked;
+                const previous = !desired;
+
+                try {
+                    await request({
+                        url: `/task/${taskId}/subtasks/${subtaskId}/completed/`,
+                        method: 'PATCH',
+                        body: { completed: desired }
+                    });
+                    if (window.currentTaskId === taskId && typeof window.loadHistory === 'function') {
+                        window.loadHistory(taskId);
+                    }
+                } catch (error) {
+                    checkboxEl.checked = previous;
+                    alert('Не удалось обновить подзадачу');
+                }
+            };
+        }
+
+        function closeTaskView() {
+            const viewSection = document.querySelector('.view_task_section');
+            viewSection.style.display = 'none';
+            viewSection.innerHTML = '';
+            window.editTaskId = null;
+        }
+
+        function setSleepNavLabel(wakeUpTime, bedTime) {
+            const el = document.getElementById('sleep-settings-nav-label');
+            if (!el) return;
+            if (wakeUpTime && bedTime) {
+                el.textContent = `${bedTime}–${wakeUpTime}`;
+                return;
+            }
+            el.textContent = 'Сон';
+        }
+
+        async function loadSleepSettingsIntoNav() {
+            try {
+                const data = await request({ url: '/user/sleep/', method: 'GET' });
+                if (data && data.wake_up_time && data.bed_time) {
+                    setSleepNavLabel(data.wake_up_time, data.bed_time);
+                }
+            } catch (e) {}
+        }
+
+        function pad2(v) {
+            return String(v).padStart(2, '0');
+        }
+
+        function ensureSleepTimeSelects() {
+            const hourSelects = [
+                document.getElementById('sleep-wake-hour'),
+                document.getElementById('sleep-bed-hour'),
+            ].filter(Boolean);
+            const minuteSelects = [
+                document.getElementById('sleep-wake-minute'),
+                document.getElementById('sleep-bed-minute'),
+            ].filter(Boolean);
+
+            if (!hourSelects.length || !minuteSelects.length) return;
+            if (hourSelects[0].dataset.ready === '1') return;
+
+            hourSelects.forEach((sel) => {
+                sel.innerHTML = '';
+                for (let h = 0; h < 24; h++) {
+                    const opt = document.createElement('option');
+                    opt.value = pad2(h);
+                    opt.textContent = pad2(h);
+                    sel.appendChild(opt);
+                }
+                sel.dataset.ready = '1';
+            });
+
+            minuteSelects.forEach((sel) => {
+                sel.innerHTML = '';
+                for (let m = 0; m < 60; m += 1) {
+                    const opt = document.createElement('option');
+                    opt.value = pad2(m);
+                    opt.textContent = pad2(m);
+                    sel.appendChild(opt);
+                }
+                sel.dataset.ready = '1';
+            });
+        }
+
+        function setSleepSelectTime(kind, timeStr) {
+            const hourSel = document.getElementById(`sleep-${kind}-hour`);
+            const minuteSel = document.getElementById(`sleep-${kind}-minute`);
+            if (!hourSel || !minuteSel) return;
+
+            const parts = String(timeStr || '').split(':');
+            const hh = parts[0] ? pad2(parts[0]) : '';
+            const mmRaw = parts[1] ? parseInt(parts[1], 10) : 0;
+            const mmClamped = Math.max(0, Math.min(59, mmRaw));
+            const mm = pad2(mmClamped);
+
+            if (hh) hourSel.value = hh;
+            minuteSel.value = mm;
+        }
+
+        function getSleepSelectTime(kind) {
+            const hourSel = document.getElementById(`sleep-${kind}-hour`);
+            const minuteSel = document.getElementById(`sleep-${kind}-minute`);
+            if (!hourSel || !minuteSel) return '';
+            const hh = hourSel.value;
+            const mm = minuteSel.value;
+            if (!hh || !mm) return '';
+            return `${hh}:${mm}`;
+        }
+
+        async function openSleepSettings() {
+            const overlay = document.getElementById('sleep-settings-overlay');
+            if (!overlay) return;
+            overlay.classList.remove('hide');
+
+            const hint = document.getElementById('sleep-settings-hint');
+            if (hint) hint.textContent = '';
+
+            ensureSleepTimeSelects();
+
+            const data = await request({ url: '/user/sleep/', method: 'GET' });
+            const wakeUp = (data && data.wake_up_time) ? data.wake_up_time : '08:00';
+            const bed = (data && data.bed_time) ? data.bed_time : '23:00';
+
+            setSleepSelectTime('wake', wakeUp);
+            setSleepSelectTime('bed', bed);
+        }
+
+        function closeSleepSettings() {
+            const overlay = document.getElementById('sleep-settings-overlay');
+            if (!overlay) return;
+            overlay.classList.add('hide');
+        }
+
+        async function saveSleepSettings() {
+            const hint = document.getElementById('sleep-settings-hint');
+
+            const wakeUpTime = getSleepSelectTime('wake');
+            const bedTime = getSleepSelectTime('bed');
+
+            if (!wakeUpTime || !bedTime) {
+                if (hint) hint.textContent = 'Выбери время подъема и отбоя';
+                return;
+            }
+
+            const data = await request({
+                url: '/user/sleep/',
+                method: 'PUT',
+                body: { wake_up_time: wakeUpTime, bed_time: bedTime }
+            });
+            if (!data) {
+                if (hint) hint.textContent = 'Не удалось сохранить';
+                return;
+            }
+            if (data.wake_up_time && data.bed_time) {
+                setSleepNavLabel(data.wake_up_time, data.bed_time);
+            } else {
+                setSleepNavLabel(wakeUpTime, bedTime);
+            }
+            closeSleepSettings();
+        }
+
+        (function initGlobalUi() {
+            const sleepOverlay = document.getElementById('sleep-settings-overlay');
+            if (sleepOverlay) {
+                sleepOverlay.addEventListener('click', (e) => {
+                    if (e.target === sleepOverlay) closeSleepSettings();
+                });
+            }
+            
+            const taskOverlay = document.querySelector('.view_task_section');
+            if (taskOverlay) {
+                taskOverlay.addEventListener('click', (e) => {
+                    if (e.target === taskOverlay) {
+                        closeTaskView();
+                    }
+                });
+            }
+
+            loadSleepSettingsIntoNav();
+            loadTheme();
+            loadGlobalAvatar();
+            initWebSocket();
+        })();
+
+        // WebSocket Logic
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/tasks/`;
+            
+            window.taskSocket = new WebSocket(wsUrl);
+
+            window.taskSocket.onopen = function(e) {
+                console.log('Task WebSocket connected');
+            };
+
+            window.taskSocket.onmessage = function(e) {
+                // console.log("WS message received:", e.data);
+                const data = JSON.parse(e.data);
+                // Dispatch event for other components
+                // If the message is wrapped in "message" key (from signals.py), unwrap it
+                const payload = data.message || data;
+                
+                const event = new CustomEvent('taskUpdate', { detail: payload });
+                document.dispatchEvent(event);
+            };
+
+            window.taskSocket.onclose = function(e) {
+                console.log('Task WebSocket closed. Reconnecting in 5s...');
+                setTimeout(initWebSocket, 5000);
+            };
+            
+            window.taskSocket.onerror = function(err) {
+                console.error('Task WebSocket error:', err);
+                window.taskSocket.close();
+            };
+        }
+
+        // Avatar Logic
+        async function loadGlobalAvatar() {
+            try {
+                // Check if we are already on profile page and have data? 
+                // Just fetch lightweight profile info or rely on caching.
+                // We'll use the profile endpoint.
+                const user = await request({ url: '/user/profile/', method: 'GET' });
+                if (user && user.avatar) {
+                    const el = document.getElementById('sidebar-avatar');
+                    if (el) el.style.backgroundImage = `url('${user.avatar}')`;
+                }
+            } catch (e) {
+                // Silent fail
+            }
+        }
+
+        // Theme Logic
+        async function loadTheme() {
+            try {
+                const data = await request({ url: '/user/theme/', method: 'GET' });
+                if (data && data.theme) {
+                    applyTheme(data.theme);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+            window.currentTheme = theme;
+        }
+
+        async function toggleTheme() {
+            const newTheme = window.currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+            
+            try {
+                await request({
+                    url: '/user/theme/',
+                    method: 'PUT',
+                    body: { theme: newTheme }
+                });
+            } catch (e) {
+                console.error('Failed to save theme', e);
+            }
+        }
+    </script>
+
+    {% block sections_block %}
+    {% endblock %}
+
+    {% block other_scripts_block %}
+    {% endblock %}
+
+    {% if request.session.tg_webapp or request.COOKIES.tg_token %}
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        <script>
+            (function () {
+                const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+                if (!tg) return;
+                try {
+                    tg.ready();
+                    tg.expand();
+                    tg.setHeaderColor(tg.themeParams && tg.themeParams.bg_color ? tg.themeParams.bg_color : '#0f1115');
+                } catch (e) {}
+            })();
+        </script>
+    {% endif %}
+</body>
+</html>
