@@ -30,11 +30,39 @@
              transform: scale(1.1);
          }
          .edit-btn svg {
-             width: 16px;
-             height: 16px;
-             stroke: white;
-         }
-     </style>
+            width: 16px;
+            height: 16px;
+            stroke: white;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 45px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .block:hover .delete-btn {
+            opacity: 1;
+        }
+        .delete-btn:hover {
+            background: rgba(255, 0, 0, 0.4);
+            transform: scale(1.1);
+        }
+        .delete-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: white;
+        }
+    </style>
 
      <div class="right_panel glass-block" id="category-container">
          <div class="block glass-block" id="add-category-btn" style="cursor: pointer;">
@@ -157,11 +185,49 @@
             }
         }
 
+        function handleDelete(e, id) {
+            e.stopPropagation();
+            
+            request({
+                url: `/category/check/${id}/`,
+                method: 'GET'
+            }).then(data => {
+                if (!data) return;
+
+                let message = 'Вы уверены, что хотите удалить эту категорию?';
+                if (data.usage_count > 0) {
+                    message = `Эта категория используется в ${data.usage_count} задачах. Вы уверены, что хотите удалить её?`;
+                }
+                
+                if (confirm(message)) {
+                    performDelete(id);
+                }
+            });
+        }
+
+        function performDelete(id) {
+            request({
+                url: `/category/delete/${id}/`,
+                method: 'DELETE'
+            }).then(() => {
+                const block = document.querySelector(`.block[data-id='${id}']`);
+                if (block) {
+                    block.remove();
+                }
+            });
+        }
+
         // Add to DOM
         function addCategoryToDOM(category) {
             const html = `
                 <div class="block glass-block" data-id='${category.id}' style="cursor: pointer; position: relative;">
                     <h1 class="button_text">${category.name}</h1>
+                    <div class="delete-btn" onclick="handleDelete(event, '${category.id}')" title="Удалить">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </div>
                     <div class="edit-btn" onclick="handleEdit(event, '${category.id}')" title="Редактировать">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -184,7 +250,7 @@
         })
 
         container.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-btn')) return;
+            if (e.target.closest('.edit-btn') || e.target.closest('.delete-btn')) return;
 
             const block = e.target.closest('.block[data-id]');
             if (!block) return;

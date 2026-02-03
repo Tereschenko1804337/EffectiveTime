@@ -53,6 +53,49 @@ class CategoryAsyncViewSet(ViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @login_required
+    async def check_usage(
+        self,
+        request: AsyncRequest,
+        pk: int,
+    ):
+        user = request.user
+        if not user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            from task.models import Task
+            category = await Category.objects.aget(id=pk, user=user)
+            usage_count = await Task.objects.filter(category=category).acount()
+
+            return Response(
+                data={"usage_count": usage_count},
+                status=status.HTTP_200_OK
+            )
+        except Category.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @login_required
+    async def delete(
+        self,
+        request: AsyncRequest,
+        pk: int,
+    ):
+        user = request.user
+        if not user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            category = await Category.objects.aget(id=pk, user=user)
+            await category.adelete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Category.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @login_required
     async def update(
         self,
         request: AsyncRequest,

@@ -12,4 +12,10 @@ urlpatterns = [
     path('category/update/<int:pk>/', CategoryAsyncViewSet.as_view({
         'patch': 'update',
     })),
+    path('category/delete/<int:pk>/', CategoryAsyncViewSet.as_view({
+        'delete': 'delete',
+    })),
+    path('category/check/<int:pk>/', CategoryAsyncViewSet.as_view({
+        'get': 'check_usage',
+    })),
 ]
